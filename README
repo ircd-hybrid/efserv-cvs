@@ -40,7 +40,7 @@
    7. 
 
        Configure all servers specified with a hub {} block in efserv.conf to
-       accept the services pseudoserver linkage. This will involve
+       accept the services pseudo-server linkage. This will involve
        configuring C:, N:, and H: lines (or their equivalents).
 
      ----------------------------------------------------------------------
@@ -92,7 +92,7 @@ Using Monitor
    MONITOR allows an operator to enable or disable Monitor mode, which allows
    an operator to receive alerts on network-wide cloning. The format of the
    notice is similar to what is given on EFnet services.us. The behavior of
-   efserv is proactive in notifying opers, rather than waiting for a CLONES
+   efserv is pro-active in notifying opers, rather than waiting for a CLONES
    command.
 
    MONITOR accepts a single parameter, either + or -. + or no parameter
@@ -117,7 +117,7 @@ Using SMode
 
 Using Admin
 
-   Services administraor access is controlled by the ADMIN. The syntax is as
+   Services administrator access is controlled by the ADMIN. The syntax is as
    follows:
 
  /msg SVC-NICK ADMIN nick password
