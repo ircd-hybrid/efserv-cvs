@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: efserv.c,v 1.7 2001/05/31 08:52:04 a1kmm Exp $
+ * $Id: efserv.c,v 1.8 2001/06/02 05:42:13 a1kmm Exp $
  */
 
 #include <stdarg.h>
@@ -79,9 +79,9 @@ send_msg(char *msg, ...)
 {
  va_list *val;
  int i, l;
- char buffer[512], *p;
+ char buffer[BUFLEN], *p;
  va_start(val, msg);
- vsnprintf(buffer, 510, msg, val);
+ vsnprintf(buffer, BUFLEN-1, msg, val);
  va_end(val);
  printf("Out: %s\n", buffer);
  i = strlen(buffer);
@@ -105,7 +105,7 @@ parse(char *msg, int len)
 {
  struct Command *cmd;
  int parc = 1;
- char *parv[256], *p, *sender;
+ char *parv[MAX_ARGS], *p, *sender;
  if (len == 0)
   return;
  printf("In: %s\n", msg);
@@ -118,7 +118,7 @@ parse(char *msg, int len)
   parv[0] = strtok(NULL, " ");
  } else
   sender = first_server ? first_server->name : NULL;
- for (p = strtok(NULL, " "); parc<256 && p; p = strtok(NULL, " "))
+ for (p = strtok(NULL, " "); parc<MAX_ARGS && p; p = strtok(NULL, " "))
  {
   if (*p != ':')
    parv[parc++] = p;
@@ -143,17 +143,17 @@ check_events(void)
 {
  static time_t
   last_cleanup_jupes=0, last_cleanup_chans=0, last_cleanup_clones=0;
- if (timenow - last_cleanup_jupes > 10)
+ if (timenow - last_cleanup_jupes > JUPE_CLEANUP_TIME)
  {
   last_cleanup_jupes = timenow;
   cleanup_jupes();
  }
- if (timenow - last_cleanup_chans > 5)
+ if (timenow - last_cleanup_chans > CHANNEL_CLEANUP_TIME)
  {
   last_cleanup_chans = timenow;
   cleanup_channels();
  }
- if (timenow - last_cleanup_clones > 10)
+ if (timenow - last_cleanup_clones > CLONE_CLEANUP_TIME)
  {
   last_cleanup_clones = timenow;
   cleanup_hosts();
@@ -217,7 +217,7 @@ do_setup_commands(void)
 void
 do_main_loop(void)
 {
- char read_buffer[2048], *p = read_buffer, *pe = read_buffer, *m;
+ char read_buffer[READLEN], *p = read_buffer, *pe = read_buffer, *m;
  int rv, skip = 0;
  do_setup_commands();
  if (connected == 0)
@@ -225,7 +225,7 @@ do_main_loop(void)
  while (reload_module == 0 && die == 0)
  {
   check_events();
-  if ((rv = read(server_fd, p, 2048-(pe-read_buffer))) <= 0)
+  if ((rv = read(server_fd, p, READLEN-(pe-read_buffer))) <= 0)
   {
    if (rv < 0 && (errno == EAGAIN || errno == EINTR))
     continue;
@@ -249,7 +249,7 @@ do_main_loop(void)
      close(server_fd);
      connected = 0;
      log("[Hub] Connection to hub lost: send error.\n");
-     sleep(3);
+     sleep(ERROR_SLEEP_TIME);
      return;
     }
     skip = 0;
@@ -259,7 +259,7 @@ do_main_loop(void)
      break;
     m = p;
    }
-  if (m == read_buffer+2048)
+  if (m == read_buffer+READLEN)
    skip = 1;
   if (m != read_buffer && m != pe)
   {

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.4 2001/06/02 04:21:03 a1kmm Exp $
+ * $Id: define.h,v 1.5 2001/06/02 05:42:14 a1kmm Exp $
  */
 
 
@@ -42,7 +42,19 @@
 #define CHANNEL_DB PREFIX "efchans.db"
 #define VERSION "pre0.1-test"
 
+#define OKILL_MAX 10
+#define SKILL_MAX 200
+
 #define ETCPATH PREFIX "etc/"
+
+#define MAX_ARGS 256
+
+#define JUPE_CLEANUP_TIME 10
+#define CHANNEL_CLEANUP_TIME 5
+#define CLONE_CLEANUP_TIME 10
+#define BUFLEN 512
+#define READLEN 2048
+#define ERROR_SLEEP_TIME 3
 
 /* Below this should not be changed on setup... */
 #define UFLAG_ADMIN           0x00000001

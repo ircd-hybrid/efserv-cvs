@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.6 2001/06/02 04:21:02 a1kmm Exp $
+ * $Id: clients.c,v 1.7 2001/06/02 05:42:13 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -203,6 +203,9 @@ m_server(char *sender, int parc, char **parv)
  if ((svr = find_server(parv[1])) != NULL)
  {
   svr->introduced = timenow;
+  svr->last_kill_dec = timenow;
+  svr->skill_count = 0;
+  svr->okill_count = 0;
   return;
  }
  svr = malloc(sizeof(*svr));
@@ -360,17 +363,38 @@ m_kill(char *sender, int parc, char **parv)
 {
  /* :doer KILL client :Reason */
  struct User *usr;
+ struct Server *svr;
  if (parc < 2)
   return;
  if (!strcasecmp(parv[1], sn))
- {
   send_msg("NICK %s 1 1 +o services %s %s :* Services *", sn,
            server_name, server_name);
-  return;
+ else
+  if ((usr = find_user(parv[1])) != NULL)
+   destroy_user(usr);
+#ifdef USE_AUTOJUPE
+ if (((usr = find_user(sender))!=NULL && (svr=usr->server)!=NULL)
+     || (svr = find_server(sender)) != NULL)
+ {
+  if (timenow-svr->last_kill_dec > 60)
+  {
+   svr->skill_count = 0;
+   svr->okill_count = 0;
+   svr->last_kill_dec = timenow;
+  }
+  if (usr != NULL)
+  {
+   if (++svr->okill_count > OKILL_MAX)
+    place_autojupe(svr, "[Auto] Operator killing too fast; Probably "
+                   "compromised operarator passwords.");
+  } else
+  {
+   if (++svr->skill_count > SKILL_MAX)
+    place_autojupe(svr, "[Auto] Server killing too fast; Probably "
+                   "compromised server.");
+  }
  }
- if ((usr = find_user(parv[1])) == NULL)
-  return;
- destroy_user(usr);
+#endif
 }
 
 void
