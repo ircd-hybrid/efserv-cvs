@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: modules.c,v 1.9 2002/04/15 17:44:31 wcampbel Exp $
+ * $Id: modules.c,v 1.10 2002/04/15 20:25:23 wcampbel Exp $
  */
 
 #define PATH PREFIX
@@ -92,6 +92,8 @@ main(int argc, char **argv)
   dt = malloc(1);
   signal(SIGHUP, handle_sighup);
   signal(SIGUSR1, handle_sigusr1);
+  /* FreeBSD & gdb detach correction */
+  signal(SIGTRAP, SIG_IGN);
   mmod = dlopen(PATH "efserv.so", RTLD_NOW);
   if (mmod == NULL)
   {

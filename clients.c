@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.15 2001/12/10 07:47:19 a1kmm Exp $
+ * $Id: clients.c,v 1.16 2002/04/15 20:25:23 wcampbel Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -420,7 +420,10 @@ m_ping(char *sender, int parc, char **parv)
 {
   if (parc < 2)
     parv[1] = sender ? sender : "";
-  send_msg(":%s PONG %s :%s", server_name, parv[1], server_name);
+  if (parc == 3)
+    send_msg(":%s PONG %s :%s", server_name, parv[2], parv[1]);
+  else
+    send_msg("PONG %s", parv[1]);
 }
 
 void
