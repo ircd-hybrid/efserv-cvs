@@ -16,16 +16,19 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: efserv.c,v 1.9 2001/07/30 06:51:04 a1kmm Exp $
+ * $Id: efserv.c,v 1.10 2001/11/05 04:27:40 wcampbel Exp $
  */
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <arpa/nameser.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <arpa/inet.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/errno.h>
 #include <string.h>
 #include <time.h>
@@ -77,7 +80,7 @@ connect_server(const char *host, int port)
 int
 send_msg(char *msg, ...)
 {
- va_list *val;
+ va_list val;
  int i, l;
  char buffer[BUFLEN], *p;
  va_start(val, msg);

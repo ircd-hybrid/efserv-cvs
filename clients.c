@@ -16,10 +16,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.8 2001/07/30 06:51:03 a1kmm Exp $
+ * $Id: clients.c,v 1.9 2001/11/05 04:27:40 wcampbel Exp $
  */
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <assert.h>
 #include "define.h"
 #include "struct.h"

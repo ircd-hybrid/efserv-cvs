@@ -16,13 +16,14 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: sconfig.y,v 1.6 2001/07/30 06:51:05 a1kmm Exp $
+ * $Id: sconfig.y,v 1.7 2001/11/05 04:27:40 wcampbel Exp $
  */
 
 %{
   #include <stdlib.h>
   #include <string.h>
   #include <stdio.h>
+  #include <time.h>
   #include "define.h"
   #include "struct.h"
   #include "utils.h"

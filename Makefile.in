@@ -24,8 +24,8 @@ SRCS=channels.c\
      utils.c \
      sconfig.tab.c \
      lex.yy.c
-OBJS=${SRCS:%.c=%.o}
-LIBS=-ldl
+OBJS=${SRCS:.c=.o}
+LIBS=@LIBS@
 
 all: efserv efserv.so help.txt
 ${BIN} : modules.o Makefile
@@ -40,8 +40,8 @@ sconfig.tab.c sconfig.tab.h : sconfig.y
 lex.yy.c : sconfig.l sconfig.tab.h
 	${LEX} sconfig.l
 
-%.o : %.c
-	${CC} ${DPATH} -c ${CFLAGS} $<
+.c.o :
+	${CC} -c ${DPATH} ${CFLAGS} $<
 help.txt : help.txt.in makehelp.pl
 	perl makehelp.pl
 
