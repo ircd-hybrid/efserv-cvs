@@ -1,3 +1,15 @@
+wcampbel    2001/12/15 23:42:49 EST	(20011216_0)
+
+  Modified files:
+    .                    README 
+  Log:
+  Doc update
+  
+  Revision  Changes    Path
+  1.4       +3 -3      efserv/README
+
+
+
 a1kmm       2001/12/10 02:47:24 EST	(20011210_3)
 
   Modified files:
@@ -50,7 +62,7 @@ a1kmm       2001/12/10 02:22:37 EST	(20011210_1)
   Log:
   - Added some forgotten files.
   - Updated cvsignore.
-  - Added $Id: ChangeLog,v 1.22 2001/12/10 07:47:24 a1kmm Exp $ to help.txt/help.txt.in so they will commit.
+  - Added $Id: ChangeLog,v 1.23 2001/12/16 04:42:50 wcampbel Exp $ to help.txt/help.txt.in so they will commit.
   
   Revision  Changes    Path
   1.2       +7 -1      efserv/.cvsignore
