@@ -1,14 +1,21 @@
+2001-11-11 19:56  wcampbel
+
+	* .depend, ChangeLog, Makefile.in, include/serno.h: Repo-moved
+	includes/ to include/ so that we can use the ChangeLog and  
+	serno.h support in our repository.  Added a cvs2cl.pl generated
+	ChangeLog and an empty include/serno.h to seed	 CVS
+
 2001-11-11 19:43  wcampbel
 
-	* channels.c, msg.c, includes/config.h: Another update of config.h,
+	* channels.c, msg.c, include/config.h: Another update of config.h,
 	look at the XXX's for more details
 
 2001-11-11 17:13  wcampbel
 
 	* .depend, channels.c, clients.c, clones.c, commands.c, config.c,
 	database.c, efserv.c, log.c, md5.c, msg.c, sconfig.y, utils.c,
-	includes/config.h, includes/define.h: Added a preliminary version
-	of includes/config.h, where all the user/admin level compile time
+	include/config.h, include/define.h: Added a preliminary version of
+	includes/config.h, where all the user/admin level compile time
 	configuration should go.  Not complete yet, as some stuff isn't
 	documented at all or just in define.h
 
@@ -23,7 +30,7 @@
 
 2001-11-11 16:22  wcampbel
 
-	* .depend, msg.c, sconfig.l, sconfig.y, includes/conf.h: Repo moved
+	* .depend, msg.c, sconfig.l, sconfig.y, include/conf.h: Repo moved
 	config.h to conf.h (I will make a config.h with customizable  
 	definitions) Revised includes Updated .depend
 
@@ -48,24 +55,23 @@
 2001-07-30 02:51  a1kmm
 
 	* channels.c, clients.c, config.c, configure.in, database.c,
-	efserv.c, modules.c, msg.c, sconfig.l, sconfig.y,
-	includes/define.h, includes/struct.h: - Added jupe exempt
-	functionality.
+	efserv.c, modules.c, msg.c, sconfig.l, sconfig.y, include/define.h,
+	include/struct.h: - Added jupe exempt functionality.
 
 2001-06-02 01:42  a1kmm
 
-	* clients.c, efserv.c, includes/define.h, includes/struct.h: -
+	* clients.c, efserv.c, include/define.h, include/struct.h: -
 	Removed some hard-coded and gave them a #define.
 
 2001-06-02 00:21  a1kmm
 
-	* channels.c, clients.c, includes/define.h, includes/funcs.h,
-	includes/struct.h: - Fixed a few bugs.	- Added AutoJupe
+	* channels.c, clients.c, include/define.h, include/funcs.h,
+	include/struct.h: - Fixed a few bugs.  - Added AutoJupe
 	functionality(#ifdef selected).
 
 2001-06-01 05:31  a1kmm
 
-	* includes/define.h: - Added a "PREFIX" in front of a few more
+	* include/define.h: - Added a "PREFIX" in front of a few more
 	variables.
 
 2001-06-01 04:59  a1kmm
@@ -79,16 +85,16 @@
 2001-06-01 04:52  a1kmm
 
 	* .depend, Makefile, Makefile.in, config.c, configure,
-	configure.in, modules.c, includes/define.h: - Added the autoconf
+	configure.in, modules.c, include/define.h: - Added the autoconf
 	stuff to make it a little more user-friendly.
 
 2001-05-31 04:52  a1kmm
 
 	* .depend, Makefile, channels.c, clients.c, clones.c, commands.c,
 	config.c, database.c, efserv.c, efserv.h, log.c, match.c, md5.c,
-	msg.c, sconfig.l, sconfig.y, utils.c, includes/conf.h,
-	includes/define.h, includes/funcs.h, includes/struct.h,
-	includes/utils.h: - Added match.c which I forgot to add before.  -
+	msg.c, sconfig.l, sconfig.y, utils.c, include/conf.h,
+	include/define.h, include/funcs.h, include/struct.h,
+	include/utils.h: - Added match.c which I forgot to add before.	-
 	Split up headers into smaller headers.
 
 2001-05-31 03:52  a1kmm
