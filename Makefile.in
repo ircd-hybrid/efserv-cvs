@@ -41,7 +41,7 @@ lex.yy.c : sconfig.l sconfig.tab.h
 	${LEX} sconfig.l
 
 %.o : %.c
-	${CC} -c ${CFLAGS} $<
+	${CC} ${DPATH} -c ${CFLAGS} $<
 help.txt : help.txt.in makehelp.pl
 	perl makehelp.pl
 

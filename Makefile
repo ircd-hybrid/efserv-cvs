@@ -8,7 +8,7 @@ BIN=efserv
 LEX=flex
 BISON=@BISON@
 MAINSO=efserv.so
-prefix=/home/andrew/src/efs2
+prefix=/home/andrew/scratch/efserv
 DPATH=-DPREFIX=\"${prefix}/\"
 IPATH=${prefix}
 SRCS=channels.c\
@@ -42,7 +42,7 @@ lex.yy.c : sconfig.l sconfig.tab.h
 	${LEX} sconfig.l
 
 %.o : %.c
-	${CC} -c ${CFLAGS} $<
+	${CC} ${DPATH} -c ${CFLAGS} $<
 help.txt : help.txt.in makehelp.pl
 	perl makehelp.pl
 
