@@ -16,10 +16,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: md5.c,v 1.1 2001/05/29 09:29:45 a1kmm Exp $
+ * $Id: md5.c,v 1.2 2001/05/31 08:52:05 a1kmm Exp $
  */
 #include <string.h>
-#include "efserv.h"
+#include <time.h>
+#include "define.h"
+#include "struct.h"
 
 void md5_block(unsigned long *in, unsigned long *out, unsigned long *x);
 

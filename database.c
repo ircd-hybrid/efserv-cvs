@@ -16,13 +16,16 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: database.c,v 1.1 2001/05/30 04:10:15 a1kmm Exp $
+ * $Id: database.c,v 1.2 2001/05/31 08:52:04 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
-#include "efserv.h"
+#include "define.h"
+#include "struct.h"
+#include "utils.h"
+#include "funcs.h"
 
 #define EFCDB_MAJOR_VERSION 0
 #define EFCDB_MINOR_VERSION 1

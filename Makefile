@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -ggdb
+CFLAGS=-Wall -ggdb -Iincludes/
 BIN=efserv
 LEX=lex
 BISON=bison

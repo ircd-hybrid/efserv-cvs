@@ -16,11 +16,14 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clones.c,v 1.3 2001/05/29 09:29:44 a1kmm Exp $
+ * $Id: clones.c,v 1.4 2001/05/31 08:52:03 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
-#include "efserv.h"
+#include "define.h"
+#include "struct.h"
+#include "utils.h"
+#include "funcs.h"
 
 void
 cleanup_hosts(void)

@@ -16,14 +16,16 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: commands.c,v 1.7 2001/05/30 04:10:14 a1kmm Exp $
+ * $Id: commands.c,v 1.8 2001/05/31 08:52:03 a1kmm Exp $
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "efserv.h"
+#include "define.h"
+#include "struct.h"
+#include "utils.h"
 
 void m_ping(char*, int, char**);
 void m_part(char*, int, char**);

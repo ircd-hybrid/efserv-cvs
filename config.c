@@ -16,15 +16,18 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: config.c,v 1.7 2001/05/31 07:52:10 a1kmm Exp $
+ * $Id: config.c,v 1.8 2001/05/31 08:52:04 a1kmm Exp $
  */
 
-#include "efserv.h"
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include "define.h"
+#include "struct.h"
+#include "utils.h"
+#include "funcs.h"
 
 char *values[200][2];
 int keyc;

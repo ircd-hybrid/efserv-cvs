@@ -16,14 +16,15 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: utils.c,v 1.6 2001/05/30 04:10:17 a1kmm Exp $
+ * $Id: utils.c,v 1.7 2001/05/31 08:52:06 a1kmm Exp $
  */
 
 #include <ctype.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <assert.h>
-#include "efserv.h"
+#include "define.h"
+#include "utils.h"
 
 #define HASHSIZE 0x1000
 

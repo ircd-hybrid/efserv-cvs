@@ -17,14 +17,14 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: sconfig.l,v 1.3 2001/05/31 07:52:11 a1kmm Exp $
+ * $Id: sconfig.l,v 1.4 2001/05/31 08:52:06 a1kmm Exp $
  */
 
 %option case-insensitive
 %option noyywrap
 
 %{
-#include "efserv.h"
+#include "config.h"
 #include "sconfig.tab.h"
 #include <stdio.h>
 #include <stdlib.h>

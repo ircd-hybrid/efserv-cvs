@@ -16,12 +16,15 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.4 2001/05/30 04:10:14 a1kmm Exp $
+ * $Id: clients.c,v 1.5 2001/05/31 08:52:03 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "efserv.h"
+#include "define.h"
+#include "struct.h"
+#include "utils.h"
+#include "funcs.h"
 
 void cleanup_hosts(void);
 void m_chmode(char *sender, int parc, char **parv);
