@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clones.c,v 1.7 2001/11/11 22:13:52 wcampbel Exp $
+ * $Id: clones.c,v 1.8 2001/12/02 03:27:12 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -34,8 +34,9 @@ cleanup_hosts(void)
   struct Host *h;
   FORLISTDEL(node,nnode,Hosts,struct Host*,h)
   {
-    h->last_recalc -= (timenow-h->last_recalc)/10*10;
-    h->rate -= (timenow-h->last_recalc)/10;
+    int rtime = h->full ? UHOST_NICKCHANGE_RATE : HOST_NICKCHANGE_RATE;
+    h->rate -= (timenow-h->last_recalc)/rtime;
+    h->last_recalc = timenow - (timenow-h->last_recalc)%rtime;
     if (h->rate < 0)
       h->rate = 0;
     if (h->count == 0 && h->rate == 0)
@@ -104,6 +105,16 @@ add_cloner(char *user, char *host)
     add_to_hash(HASH_HOST, h2->host, h2);
     add_to_list(&Hosts, h2);
   }
+  h1->rate -= (timenow-h1->last_recalc)/UHOST_NICKCHANGE_RATE;
+  h1->last_recalc = timenow -
+                    (timenow-h1->last_recalc)%UHOST_NICKCHANGE_RATE;
+  if (h1->rate < 0)
+    h1->rate = 0;
+  h2->rate -= (timenow-h2->last_recalc)/HOST_NICKCHANGE_RATE;
+  h2->last_recalc = timenow -
+                    (timenow-h2->last_recalc)%HOST_NICKCHANGE_RATE;
+  if (h2->rate < 0)
+    h2->rate = 0;
   h1->count++;
   h1->rate++;
   h2->count++;
@@ -118,12 +129,52 @@ add_cloner(char *user, char *host)
     report_cloner(h1, "CLONES");
     return;
   }
-  if (h2->rate > MAXCLONES_HOST)
+  if (h2->rate > MAXNICKRATE_HOST)
   {
     report_cloner(h2, "NICKFLOODER");
     return;
   }
-  if (h1->rate > MAXCLONES_UHOST)
+  if (h1->rate > MAXNICKRATE_UHOST)
+  {
+    report_cloner(h1, "NICKFLOODER");
+    return;
+  }
+}
+
+void
+add_nickchange(char *user, char *host)
+{
+  struct Host *h1, *h2;
+  char uah[HOSTLEN+USERLEN+1];
+
+  strncpy(uah, user, USERLEN-1)
+    [USERLEN-1] = '\0';
+
+  strcat(uah, "@");
+  strncat(uah, host, HOSTLEN-1);
+
+  if ((h1 = find_host(uah)) == NULL)
+    return;
+  if ((h2 = find_host(host)) == NULL)
+    return;
+  h1->rate -= (timenow-h1->last_recalc)/UHOST_NICKCHANGE_RATE;
+  h1->last_recalc = timenow -
+                    (timenow-h1->last_recalc)%UHOST_NICKCHANGE_RATE;
+  if (h1->rate < 0)
+    h1->rate = 0;
+  h2->rate -= (timenow-h2->last_recalc)/HOST_NICKCHANGE_RATE;
+  h2->last_recalc = timenow -
+                    (timenow-h2->last_recalc)%HOST_NICKCHANGE_RATE;
+  if (h2->rate < 0)
+    h2->rate = 0;
+  h1->rate++;
+  h2->rate++;
+  if (h2->rate > MAXNICKRATE_HOST)
+  {
+    report_cloner(h2, "NICKFLOODER");
+    return;
+  }
+  if (h1->rate > MAXNICKRATE_UHOST)
   {
     report_cloner(h1, "NICKFLOODER");
     return;

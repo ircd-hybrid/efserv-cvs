@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.11 2001/11/22 04:18:25 wcampbel Exp $
+ * $Id: clients.c,v 1.12 2001/12/02 03:27:12 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -194,10 +194,11 @@ m_nick(char *sender, int parc, char **parv)
   if (parc < 2)
    return;
   if ((usr = find_user(sender)) == NULL)
-   return;
+    return;
   remove_from_hash(HASH_USER, usr->nick);
   strncpy(usr->nick, parv[1], NICKLEN-1)[NICKLEN-1] = 0;
   add_to_hash(HASH_USER, usr->nick, usr);
+  add_nickchange(usr->user, usr->host);
  }
 }
 

@@ -12,6 +12,7 @@ char *getmd5(struct User*);
 void cleanup_channels(void);
 void cleanup_jupes(void);
 void cleanup_hosts(void);
+void add_nickchange(char *user, char *host);
 void wipe_type_from_hash(int type, void (*cdata)(void*));
 void save_channel_opdb(void);
 void load_channel_opdb(void);

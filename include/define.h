@@ -16,11 +16,25 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.7 2001/11/11 22:13:52 wcampbel Exp $
+ * $Id: define.h,v 1.8 2001/12/02 03:27:14 a1kmm Exp $
  */
 
+/* The maximum number of clients per user@host */
 #define MAXCLONES_UHOST 4
+/* The maximum number of clients per host */
 #define MAXCLONES_HOST 6
+
+/* The minimum average time(in seconds) between nick introductions
+ * or changes allowed. */
+#define UHOST_NICKCHANGE_RATE 10
+/* The maximum number of nick introductions/changes in excess of
+ * 1 per RATETIME_UHOST allowed.  */
+#define MAXNICKRATE_UHOST 3
+
+/* Same but for hosts not user@hosts */
+#define HOST_NICKCHANGE_RATE 10
+#define MAXNICKRATE_HOST 6
+
 #define MAX_SJOIN_DELAY 60
 
 #define JUPE_EXPIRE_TIME 45 *60
