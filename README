@@ -154,7 +154,17 @@ Using Sunjupe
      Note: The service will send text to STDOUT and STDERR. For this reason,
      the redirections above are needed.
 
+     ----------------------------------------------------------------------
+
+                                Signal Handling
+
+   efserv handles two UNIX(c) signals, SIGHUP and SIGUSR1. SIGUSR1 is used to
+   force efserv to reload it's module[2]. SIGHUP will force the service to
+   reload the configuration file.
+
   Notes
 
    [1] Manual Chanfix is controlled by the USE_REOP define in                 
        include/config.h.                                                      
+   [2] SIGUSR1 allows the service to be upgraded on the fly, without having a 
+       restart.                                                               
