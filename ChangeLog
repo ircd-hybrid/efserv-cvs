@@ -1,3 +1,34 @@
+wcampbel    2002/04/16 17:33:33 EDT	(20020416_0)
+
+  Modified files:
+    .                    .depend Makefile.in config.c configure 
+                         configure.in example.conf 
+    include              config.h 
+  Added files:
+    .                    mkpasswd.c 
+    include              setup.h.in 
+  Log:
+  Added USE_CRYPT, allowing the administrator passwords to be encrypted,
+    and all related items.
+  The configure changes required include/setup.h.
+  In the unencrypted option, use a case sensitive comparison for the passowrd
+    rather than a caseless variety for added security.
+  Include mkpasswd, installed into the same directory as efserv and the
+    module.
+  
+  Revision  Changes    Path
+  1.10      +1 -1      efserv/.depend
+  1.13      +8 -3      efserv/Makefile.in
+  1.13      +10 -1     efserv/config.c
+  1.4       +277 -85   efserv/configure
+  1.5       +8 -2      efserv/configure.in
+  1.5       +4 -2      efserv/example.conf
+  1.5       +4 -0      efserv/include/config.h
+  1.1       +57 -0     efserv/include/setup.h.in (new)
+  1.1       +174 -0    efserv/mkpasswd.c (new)
+
+
+
 wcampbel    2002/04/15 16:25:24 EDT	(20020415_1)
 
   Modified files:
