@@ -167,4 +167,5 @@ Using Sunjupe
    [1] Manual Chanfix is controlled by the USE_REOP define in                 
        include/config.h.                                                      
    [2] SIGUSR1 allows the service to be upgraded on the fly, without having a 
-       restart.                                                               
+       restart. You may have to send a command to the service in order for    
+       the module to actually reload, due to the way efserv operates.         
