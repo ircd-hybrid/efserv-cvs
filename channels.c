@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: channels.c,v 1.7 2001/06/02 04:21:02 a1kmm Exp $
+ * $Id: channels.c,v 1.8 2001/07/30 06:51:03 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -122,7 +122,8 @@ cleanup_channels(void)
 {
  int doing_reop = 0;
  static time_t last_reop = 0;
- struct List *node, *nnode;
+ struct List *node, *nnode, *node2, *nnode2;
+ struct User *usr;
  struct Channel *ch;
  if (timenow - last_reop > CHAN_SLICE_LENGTH)
  {
@@ -131,6 +132,15 @@ cleanup_channels(void)
  }
  FORLISTDEL(node,nnode,Channels,struct Channel*,ch)
  {
+  /* Check the cyops list... */
+#ifdef USE_CYCLE
+  if (ch->cycops != NULL && (timenow - ch->cycled) > CYCLE_REJOIN_TIME)
+  {
+   FORLISTDEL(node2,nnode2,ch->cycops,struct User*,usr)
+    free(node2);
+   ch->cycops = NULL;
+  }
+#endif
   /* Check if it is empty... */
   if (ch->ops == NULL && ch->nonops == NULL)
   {
@@ -138,6 +148,12 @@ cleanup_channels(void)
    {
     remove_from_hash(HASH_CHAN, ch->name);
     remove_from_list(&Channels, node);
+    FORLISTDEL(node2,nnode2,ch->cycops,struct User*,usr)
+     free(node2);
+    FORLISTDEL(node2,nnode2,ch->ops,struct User*,usr)
+     free(node2);
+    FORLISTDEL(node2,nnode2,ch->nonops,struct User*,usr)
+     free(node2);
     free(ch);
    }
    continue;
@@ -201,6 +217,10 @@ m_sjoin(char *sender, int parc, char **parv)
   ch->nonops = NULL;
   ch->exops = NULL;
   ch->last_notempty = timenow;
+#ifdef USE_CYCLE
+  ch->cycled = 0;
+  ch->cycops = NULL;
+#endif
   add_to_list(&Channels, ch);
   add_to_hash(HASH_CHAN, ch->name, ch);
  }
@@ -213,6 +233,10 @@ m_sjoin(char *sender, int parc, char **parv)
  {
   int isop = 0;
   struct User *usr;
+#ifdef USE_CYCLE
+  struct User *usr1;
+  struct List *node;
+#endif
   if (*p == '@')
   {
    p++;
@@ -226,6 +250,20 @@ m_sjoin(char *sender, int parc, char **parv)
 #ifdef USE_SMODES
   if (kick_excluded(ch, usr))
    continue;
+#endif
+#ifdef USE_CYCLE
+  FORLIST(node,ch->cycops,struct User*,usr1)
+   if (usr1 == usr)
+    break;
+  if (ch->cycops != NULL && isop != 0 && usr1 != usr)
+  {
+   isop = 0;
+   send_msg(":%s MODE %s -o %s", sn, ch->name, usr->nick);
+  } else if (ch->cycops != NULL && isop == 0 && usr1 == usr)
+  {
+   isop++;
+   send_msg(":%s MODE %s +o %s", sn, ch->name, usr->nick);
+  }
 #endif
   add_to_list(isop ? &ch->ops : &ch->nonops, usr);
  }
@@ -304,6 +342,32 @@ m_chmode(char *sender, int parc, char **parv)
  
  if ((ch = find_channel(parv[1])) == NULL)
   return;
+ 
+ if (ch->cycops != NULL && (usr = find_user(sender))!=NULL)
+ {
+  char *p;
+  usr2 = NULL;
+  FORLIST(node,ch->cycops,struct User*,usr2)
+   if (usr2 == usr)
+    break;
+  if (usr2 != usr)
+  {
+   if (parv[2][0] == 0)
+    return;
+   /* Unset it now! It could block the re-joiners... */
+   if (parv[2][0] != '+')
+    parv[2][0] = '-';
+   for (p=parv[2]; *p != 0; p++)
+    if (*p == '+')
+     *p = '-';
+   parc -= 2;
+   /* Ugly kludge which will hopefully be reliable... */
+   while (parc--)
+    parv[2][strlen(parv[2])] = ' ';
+   send_msg(":%s MODE %s %s", sn, parv[1], parv[2]);
+   return;
+  }
+ }
  
  /* MODE #channel +o nick ... */
  /* Scan for +o or -o... */

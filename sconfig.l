@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: sconfig.l,v 1.4 2001/05/31 08:52:06 a1kmm Exp $
+ * $Id: sconfig.l,v 1.5 2001/07/30 06:51:05 a1kmm Exp $
  */
 
 %option case-insensitive
@@ -70,6 +70,14 @@ user { return USER; }
 hub { return HUB; }
 minimum_servers { return MINSERVS; }
 noreop { return NOREOP; }
+yes { return YES; }
+no { return NO; }
+sunjupe { return SUNJUPE; }
+jexempt { return JEXEMPT; }
+type { return TYPE; }
+manual { return MANUAL; }
+auto { return AUTO; }
+all { return ALL; }
 .		        { return yytext[0]; }
 <<EOF>> { yyterminate(); }
 %%

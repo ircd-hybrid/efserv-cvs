@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: efserv.c,v 1.8 2001/06/02 05:42:13 a1kmm Exp $
+ * $Id: efserv.c,v 1.9 2001/07/30 06:51:04 a1kmm Exp $
  */
 
 #include <stdarg.h>
@@ -173,6 +173,7 @@ wipe_client_status(void)
   else
    destroy_server(svr);
  }
+ first_server = NULL;
 }
 
 void

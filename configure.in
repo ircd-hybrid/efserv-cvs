@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.1 2001/06/01 08:52:12 a1kmm Exp $
+dnl $Id: configure.in,v 1.2 2001/07/30 06:51:04 a1kmm Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(efserv.c)
 AC_PREFIX_DEFAULT(/usr/local/efserv)
@@ -13,9 +13,9 @@ AC_ISC_POSIX
 AC_PATH_PROG(RM, rm)
 AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(MKDIR, mkdir)
+AC_PATH_PROG(BISON, bison)
 
 dnl Checks for programs.
-AC_PROG_YACC
 AC_PROG_CC
 AC_PROG_LEX
 

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: modules.c,v 1.5 2001/06/01 08:52:12 a1kmm Exp $
+ * $Id: modules.c,v 1.6 2001/07/30 06:51:04 a1kmm Exp $
  */
 
 #define PATH PREFIX
@@ -31,7 +31,7 @@ int connected = 0;
 
 struct List *Servers = NULL, *Users = NULL, *Channels = NULL,
             *Hosts = NULL, *Monitors = NULL, *VoteServers = NULL,
-            *Hubs = NULL, *HKeywords = NULL;
+            *Hubs = NULL, *HKeywords = NULL, *JupeExempts = NULL;
 FILE *logfile = NULL;
 struct Server *first_server = NULL;
 void *mmod;

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: config.c,v 1.9 2001/06/01 08:52:11 a1kmm Exp $
+ * $Id: config.c,v 1.10 2001/07/30 06:51:03 a1kmm Exp $
  */
 
 #include <stdio.h>
@@ -59,6 +59,10 @@ check_admin(struct User *usr, const char *name, const char *pass)
       {
        usr->flags |= UFLAG_SERVADMIN;
        usr->caps = sa->caps;
+       if (usr->sa)
+        deref_admin(usr->sa);
+       usr->sa = sa;
+       usr->sa->refcount++;
        return -1;
       }
     return 0;
@@ -183,6 +187,7 @@ do_rehash(void)
  struct List *node, *nnode;
  struct ServAdmin *sa;
  struct VoteServer *vs;
+ struct JExempt *je;
  struct Hub *hub;
  char *kw;
  FORLISTDEL(node,nnode,serv_admins,struct ServAdmin*,sa)
@@ -209,9 +214,15 @@ do_rehash(void)
   free(kw);
   free(node);
  }
+ FORLISTDEL(node,nnode,JupeExempts,struct JExempt*,je)
+ {
+  free(je->name);
+  free(je);
+ }
  VoteServers = NULL;
  serv_admins = NULL;
  Hubs = NULL;
  HKeywords = NULL;
+ JupeExempts = NULL;
  read_all_config();
 }

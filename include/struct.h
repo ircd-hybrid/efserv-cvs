@@ -16,8 +16,9 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: struct.h,v 1.3 2001/06/02 05:42:15 a1kmm Exp $
+ * $Id: struct.h,v 1.4 2001/07/30 06:51:06 a1kmm Exp $
  */
+#include "define.h"
 
 struct Command
 {
@@ -52,6 +53,10 @@ struct Channel
  time_t ts;
  struct List *ops, *nonops, *exops;
  time_t last_notempty;
+#ifdef USE_CYCLE
+ time_t cycled;
+ struct List *cycops;
+#endif
 };
 
 struct ChanopUser
@@ -111,10 +116,17 @@ struct Hub
  int port;
 };
 
+struct JExempt
+{
+ char *name;
+ int flags;
+};
+
 extern struct Command Commands[];
 extern struct Server *first_server;
 extern struct List *Servers, *Users, *Channels, *Hosts, *Monitors,
-                   *serv_admins, *VoteServers, *Hubs, *HKeywords;
+                   *serv_admins, *VoteServers, *Hubs, *HKeywords,
+                   *JupeExempts;
 extern struct Server *first_server;
 extern char *server_name, *server_pass, *server_host, *sn;
 extern int port;

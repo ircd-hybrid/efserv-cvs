@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: msg.c,v 1.6 2001/05/31 08:52:05 a1kmm Exp $
+ * $Id: msg.c,v 1.7 2001/07/30 06:51:05 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -106,6 +106,7 @@ pm_jupe(struct User *usr, char *str)
  struct Jupe *jp;
  struct Server *ssvr;
  struct List *node;
+ struct JExempt *je;
  if (first_server == NULL)
   return;
  if ((vs = find_server_vote(usr->server->name)) == NULL)
@@ -141,6 +142,14 @@ pm_jupe(struct User *usr, char *str)
    sn, usr->nick);
   return;
  }
+ /* See if they are exempt... */
+ FORLIST(node,JupeExempts,struct JExempt*,je)
+  if (match(je->name, svr) && (je->flags & JEFLAG_MANUAL))
+  {
+   send_msg(":%s NOTICE %s :Sorry, that server is exempt from jupes.",
+            sn, usr->nick);
+   return;
+  }
  /* Now we have to look up the jupe... */
  ssvr = find_server(svr);
  if ((ssvr == NULL || ssvr->jupe == NULL) &&
@@ -446,10 +455,101 @@ pm_admin(struct User *usr, char *str)
 }
 
 void
-pm_niy(struct User *usr, char *str)
+pm_sunjupe(struct User *usr, char *str)
 {
- send_msg(":%s NOTICE %s :Not implemented yet.", sn, usr->nick);
+ char *server;
+ struct Server *svr;
+ struct Jupe *jp;
+ struct JupeVote *jv;
+ struct List *node, *nnode;
+ if (!CanSUnjupe(usr))
+ {
+  send_msg(":%s NOTICE %s :Permission denied.", sn, usr->nick);
+  return;
+ }
+ if ((server = strtok(str, " \t")) == NULL)
+ {
+  send_msg(":%s NOTICE %s :Usage: SUNJUPE server.name", sn, usr->nick);
+  return;
+ }
+ if ((svr = find_server(server)) == NULL || !IsJuped(svr))
+ {
+  send_msg(":%s NOTICE %s :That server isn't juped.", sn, usr->nick);
+  return;
+ }
+ log("[SUNJUPE] Admin %s!%s@%s[%s]{%s} is super-unjuping %s.\n",
+     usr->nick, usr->user, usr->host, usr->server->name, usr->sa->name,
+     svr->name);
+ send_msg(":%s WALLOPS :Admin %s!%s@%s[%s]{%s} is super-unjuping %s.",
+     sn, usr->nick, usr->user, usr->host, usr->server->name,
+     usr->sa->name, svr->name);
+ send_msg(":%s SQUIT %s :Super-unjuped by administrator.",
+          sn, svr->name);
+ /* Actually destroy the jupe, so it can be re-juped... */
+ jp = svr->jupe;
+ destroy_server(svr);
+ FORLISTDEL(node,nnode,jp->jupevotes,struct JupeVote*,jv)
+ {
+  if (jv->vsa)
+   deref_admin(jv->vsa);
+  deref_voteserver(jv->vs);
+  free(node);
+  free(jv);
+ }
+ free(jp);
 }
+
+#ifdef USE_CYCLE
+void
+pm_cycle(struct User *usr, char *str)
+{
+ char *channel;
+ struct Channel *ch;
+ struct User *usr1;
+ struct List *node, *nnode;
+ /* CYCLE #channel */
+ if ((channel = strtok(str, " \t")) == NULL || *channel != '#')
+ {
+  send_msg(":%s NOTICE %s :Usage: CYCLE #channel", sn, usr->nick);
+  return;
+ }
+ if ((ch = find_channel(channel)) == NULL)
+ {
+  send_msg(":%s NOTICE %s :That channel does not exist.", sn, usr->nick);
+  return;
+ }
+ FORLIST(node,ch->ops,struct User*,usr1)
+  if (usr1 == usr)
+   break;
+ if (usr1 != usr)
+ {
+  send_msg(":%s NOTICE %s :You are not an op on that channel.", sn,
+           usr->nick);
+  return;
+ }
+#if 0
+ if (ch->cycops != NULL || (timenow - ch->cycled) < 60*60)
+ {
+  send_msg(":%s NOTICE %s :You cannot cycle your channel more than "
+           "once an hour. Try again in %ld minutes.", sn, usr->nick,
+           60 - (timenow-ch->cycled)/60);
+  return;
+ }
+#endif
+ send_msg(":%s MODE %s +i", sn, ch->name);
+ FORLISTDEL(node,nnode,ch->nonops,struct User*,usr1)
+ {
+  send_msg(":%s KICK %s :%s", sn, ch->name, usr1->nick);
+  free(node);
+ }
+ FORLISTDEL(node,nnode,ch->ops,struct User*,usr1)
+  send_msg(":%s KICK %s :%s", sn, ch->name, usr1->nick);
+ ch->cycops = ch->ops;
+ ch->ops = NULL;
+ ch->cycled = timenow;
+ ch->nonops = NULL;
+}
+#endif
 
 struct
 {
@@ -466,8 +566,12 @@ struct
 #ifdef USE_REOP
  {"REOP", pm_reop, ALEVEL_OPER},
 #endif
+#ifdef USE_CYCLE
+ {"CYCLE", pm_cycle, ALEVEL_ANY},
+#endif
  {"ADMIN", pm_admin, ALEVEL_OPER},
  {"MONITOR", pm_monitor, ALEVEL_OPER},
+ {"SUNJUPE", pm_sunjupe, ALEVEL_SERVADMIN},
  {0, 0}
 };
 

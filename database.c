@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: database.c,v 1.2 2001/05/31 08:52:04 a1kmm Exp $
+ * $Id: database.c,v 1.3 2001/07/30 06:51:04 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -115,6 +115,9 @@ load_channel_opdb(void)
   ch->flags = 0;
   ch->ts = -1;
   ch->ops = ch->nonops = ch->exops = NULL;
+#ifdef USE_CYCLE
+  ch->cycops = NULL;
+#endif
   /* *sigh* hope services stays up for longer than 2 hour average... */
   ch->last_notempty = timenow;
   add_to_list(&Channels, ch);

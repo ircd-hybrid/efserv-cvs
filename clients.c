@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.7 2001/06/02 05:42:13 a1kmm Exp $
+ * $Id: clients.c,v 1.8 2001/07/30 06:51:03 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -37,11 +37,17 @@ void
 place_autojupe(struct Server *svr, const char *reason)
 {
  struct Jupe *jp;
+ struct List *node;
+ struct JExempt *je;
  if (first_server == NULL || svr == first_server)
   return;
  /* Ignore if already juped... */
  if (IsJuped(svr))
   return;
+ /* See if they are exempt... */
+ FORLIST(node,JupeExempts,struct JExempt*,je)
+  if (match(je->name, svr->name) && (je->flags & JEFLAG_AUTO))
+   return;
  /* Now check if there is a pending vote to jupe... */
  if (svr->jupe != NULL)
  {
@@ -163,6 +169,10 @@ m_nick(char *sender, int parc, char **parv)
    return;
   if (!(svr = find_server(parv[7])))
    return;
+#ifdef USE_AUTOJUPE
+  if (!strcasecmp(parv[1], sn))
+   place_autojupe(svr, "[Auto] Tried to introduce services nick.");
+#endif
   usr = malloc(sizeof(*usr));
   strncpy(usr->nick, parv[1], NICKLEN-1)[NICKLEN-1] = 0;
   strncpy(usr->user, parv[5], USERLEN-1)[USERLEN-1] = 0;
@@ -242,6 +252,9 @@ destroy_user(struct User *usr)
   FORLISTDEL(node2,nnode2,ch->ops,struct User *,usr2)
    if (usr2 == usr)
     remove_from_list(&ch->ops, node2);
+  FORLISTDEL(node2,nnode2,ch->cycops,struct User *,usr2)
+   if (usr2 == usr)
+    remove_from_list(&ch->cycops, node2);
  }
  remove_cloner(usr->user, usr->host);
  if (usr->monnode)
@@ -274,7 +287,10 @@ destroy_server(struct Server *svr)
  FORLISTDEL(node,nnode,Users,struct User*,usr)
   FORLIST(node2,DeadServers,struct Server*,csvr)
    if (usr->server == csvr)
+   {
     destroy_user(usr);
+    break;
+   }
  FORLISTDEL(node,nnode,DeadServers,struct Server*,csvr)
  {
   free(node);
@@ -427,7 +443,7 @@ m_admin(char *sender, int parc, char **parv)
 void
 m_motd(char *sender, int parc, char **parv)
 {
- send_msg(":%s NOTICE %s :This is services. It has not MOTD.", sn, sender);
+ send_msg(":%s NOTICE %s :This is services. It has no MOTD.", sn, sender);
 }
 
 void

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.5 2001/06/02 05:42:14 a1kmm Exp $
+ * $Id: define.h,v 1.6 2001/07/30 06:51:06 a1kmm Exp $
  */
 
 
@@ -27,6 +27,7 @@
 #define CHANLEN 255
 
 #define USE_AUTOJUPE
+#define USE_CYCLE
 
 #define MAXCLONES_UHOST 4
 #define MAXCLONES_HOST 6
@@ -36,6 +37,7 @@
 #define MINIMUM_OPS  0 /* 4 */
 #define EXOP_EXPIRE_TIME 2*60 /* *60 */
 #define CHAN_SLICE_LENGTH 5
+#define CYCLE_REJOIN_TIME 30
 
 #define NETNAME "test net"
 #define LOGFILE PREFIX "efserv.log"
@@ -80,3 +82,8 @@
 
 #define IsJuped(x) (x->flags & SERVFLAG_JUPED)
 
+#define SACAP_SUNJUPE 1
+#define CanSUnjupe(x) (x->sa && x->sa->caps & SACAP_SUNJUPE)
+
+#define JEFLAG_AUTO 1
+#define JEFLAG_MANUAL 2

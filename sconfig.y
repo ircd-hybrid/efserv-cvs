@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: sconfig.y,v 1.5 2001/05/31 08:52:06 a1kmm Exp $
+ * $Id: sconfig.y,v 1.6 2001/07/30 06:51:05 a1kmm Exp $
  */
 
 %{
@@ -33,6 +33,7 @@
   struct ServAdmin *ad;
   struct AdminHost *ah;
   struct VoteServer *vs;
+  struct JExempt *je;
   struct Hub *hub;
   extern int lineno;
   #define DupString(x,y) if(x) free(x); x = strdup(y);
@@ -54,6 +55,14 @@
 %token HUB
 %token MINSERVS
 %token NOREOP
+%token YES
+%token NO
+%token SUNJUPE
+%token JEXEMPT
+%token TYPE
+%token AUTO
+%token MANUAL
+%token ALL
 %%
 
 conf: conf conf_item | conf_item;
@@ -62,6 +71,7 @@ conf_item: general_block |
            admin_block |
            hub_block |
            server_block |
+           jexempt_block |
            noreop_block;
 
 general_block: GENERAL '{' general_items '}' ';';
@@ -159,7 +169,7 @@ admin_block: ADMIN '{'
 }';';
 
 admin_items: admin_items admin_item | admin_item;
-admin_item: admin_name | admin_pass | admin_auth
+admin_item: admin_name | admin_pass | admin_auth | admin_sunjupe;
 
 admin_name: NAME '=' QSTRING
 {
@@ -170,6 +180,15 @@ admin_pass: PASS '=' QSTRING
 {
  DupString(ad->pass, yylval.string);
 } ';';
+
+admin_sunjupe: SUNJUPE '=' YES ';'
+{
+ ad->caps |= SACAP_SUNJUPE;
+} |
+SUNJUPE '=' NO ';'
+{
+ ad->caps &= ~SACAP_SUNJUPE;
+};
 
 admin_auth: AUTH '{' auth_items '}'
 {
@@ -243,5 +262,42 @@ noreop_items: noreop_items noreop_host | noreop_host;
 noreop_host: HOST '=' QSTRING
 {
  add_to_list(&HKeywords, strdup(yylval.string));
+} ';';
+
+jexempt_block: JEXEMPT
+{
+ je = malloc(sizeof(*je));
+ je->flags = 0;
+ je->name = NULL;
+} '{' jexempt_items '}'
+{
+ if (je->name == NULL || je->flags == 0)
+ {
+  if (je->name != NULL)
+   free(je->name);
+  free(je);
+ }
+ else
+ {
+  add_to_list(&JupeExempts, je);
+ }
+} ';';
+jexempt_items: jexempt_item jexempt_items | jexempt_item;
+jexempt_item: jexempt_name | jexempt_type;
+jexempt_name: NAME '=' QSTRING
+{
+ if (je->name != NULL)
+  free(je->name);
+ je->name = strdup(yylval.string);
+} ';';
+jexempt_type: TYPE '=' AUTO
+{
+ je->flags |= JEFLAG_AUTO;
+}';' | TYPE '=' MANUAL
+{
+ je->flags |= JEFLAG_AUTO;
+} ';' | TYPE '=' ALL
+{
+ je->flags |= JEFLAG_AUTO | JEFLAG_MANUAL;
 } ';';
 %%
