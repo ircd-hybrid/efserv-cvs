@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: struct.h,v 1.5 2001/12/02 03:59:39 a1kmm Exp $
+ * $Id: struct.h,v 1.6 2001/12/02 06:59:06 a1kmm Exp $
  */
 #include "define.h"
 
@@ -49,9 +49,9 @@ struct Server
 struct Channel
 {
  char name[CHANLEN];
- int flags;
- time_t ts;
- struct List *ops, *nonops, *exops;
+ int flags, modes;
+ time_t ts, first_ts;
+ struct List *ops, *nonops, *exops, *bans;
  time_t last_notempty;
 #ifdef USE_CYCLE
  time_t cycled;

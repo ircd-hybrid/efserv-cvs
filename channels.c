@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: channels.c,v 1.12 2001/11/12 00:43:12 wcampbel Exp $
+ * $Id: channels.c,v 1.13 2001/12/02 06:59:04 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,6 +29,44 @@
 #include "funcs.h"
 
 void
+clearops_channel(struct Channel *ch)
+{
+  struct List *node, *nnode;
+  struct User *usr;
+  char *b, *p, buf[4], pbuf[2];
+  FORLISTDEL(node, nnode, ch->ops, struct User*, usr)
+  {
+    send_msg(":%s MODE %s -o %s", sn, ch->name, usr->nick);
+    free(node);
+  }
+  ch->ops = NULL;
+  FORLISTDEL(node, nnode, ch->bans, char *, b)
+  {
+    send_msg(":%s MODE %s -b %s", sn, ch->name, b);
+    free(b);
+    free(node);
+  }
+  ch->bans = NULL;
+  b = buf;
+  p = pbuf;
+  if (ch->modes & CHMODE_INVITE)
+    *b++ = 'i';
+  if (ch->modes & CHMODE_LIMIT)
+    *b++ = 'l';
+  if (ch->modes & CHMODE_KEY)
+  {
+    *b++ = 'k';
+    *p++ = '*';
+  }
+  *b++ = 0;
+  *p++ = 0;
+  if (ch->modes & (CHMODE_INVITE|CHMODE_LIMIT|CHMODE_KEY))
+  {
+    send_msg(":%s MODE %s -%s %s", sn, ch->name, buf, pbuf);
+  }
+}
+
+void
 check_channel_status(struct Channel *ch)
 {
   struct List *node, *nnode, *node2, *BestOps = NULL;
@@ -39,19 +77,69 @@ check_channel_status(struct Channel *ch)
 
   if (server_count < minimum_servers)
     return;
+  if ((timenow - ch->ts) > CHAN_RECOVER_TIME)
+    ch->first_ts = ch->ts;
+  else if (ch->ops != NULL && ch->ts > ch->first_ts && ch->exops != NULL)
+  {
+    int tflags = 0, mf;
+    FORLIST(node, ch->exops, struct ChanopUser *, cou)
+    {
+      i = 0;
+      FORLIST(node2, BestOps, struct ChanopUser *, cou2)
+        if (++i > 5 || cou2->slices <= cou->slices)
+          break;
+      if (i > 5 || (node2 == NULL && count >= 5))
+        continue;
+      add_to_list_before(&BestOps, node2, cou);
+      count++;
+    }
+
+    if (count > 5)
+      count = 5;
+    FORLIST(node, ch->ops, struct User*, usr)
+    {
+      char *md5 = getmd5(usr);
+      mf = 0;
+      i = 0;
+      FORLIST(node2, BestOps, struct ChanopUser*, cou)
+      {
+        if (i++ > count)
+          break;
+        if (!memcmp(md5, cou->uhost_md5, 16))
+          mf = 1;
+      }
+      if (mf)
+        tflags |= 1;
+      else
+        tflags |= 2;
+    }
+    switch (tflags)
+    {
+      case 1:                  /* Only exops, reset the oldest ts... */
+        ch->first_ts = ch->ts;
+        break;
+      case 2:                  /* Only non-exops, massdeop. */
+        clearops_channel(ch);
+        break;
+      /* case 3: A mixture. Do nothing and see what happens. */
+    }
+    FORLISTDEL(node, nnode, BestOps, struct ChanopUser *, cou)
+      free(node);
+    return;
+  }
 
   if (ch->ops == NULL)
   {
     if (ch->exops == NULL)
       return;
-    FORLIST(node,ch->exops,struct ChanopUser*,cou)
+    FORLIST(node, ch->exops, struct ChanopUser *, cou)
     {
       i = 0;
-      FORLIST(node2,BestOps,struct ChanopUser*,cou2)
-	if (++i > 5 || cou2->slices <= cou->slices)
-	  break;
-      if (i>5 || (node2 == NULL && count >= 5))
-	continue;
+      FORLIST(node2, BestOps, struct ChanopUser *, cou2)
+        if (++i > 5 || cou2->slices <= cou->slices)
+          break;
+      if (i > 5 || (node2 == NULL && count >= 5))
+        continue;
       add_to_list_before(&BestOps, node2, cou);
       count++;
     }
@@ -59,28 +147,28 @@ check_channel_status(struct Channel *ch)
     if (count > 5)
       count = 5;
 
-    FORLISTDEL(node,nnode,ch->nonops,struct User*,usr)
+    FORLISTDEL(node, nnode, ch->nonops, struct User *, usr)
     {
       char *md5 = getmd5(usr);
       i = 0;
 
-      FORLIST(node2,BestOps,struct ChanopUser*,cou)
+      FORLIST(node2, BestOps, struct ChanopUser *, cou)
       {
-	if (++i > count)
-	  continue;
+        if (++i > count)
+          continue;
 
-	if (!memcmp(md5, cou->uhost_md5, 16))
-	{
-	  remove_from_list(&ch->nonops, node);
-	  add_to_list(&ch->ops, usr);
-	  send_msg(":%s MODE %s +o %s", sn, ch->name, usr->nick);
-	  log("[AutoReop] Auto-reopped %s on channel %s\n", usr->nick,
-	      ch->name);
-	}
+        if (!memcmp(md5, cou->uhost_md5, 16))
+        {
+          remove_from_list(&ch->nonops, node);
+          add_to_list(&ch->ops, usr);
+          send_msg(":%s MODE %s +o %s", sn, ch->name, usr->nick);
+          log("[AutoReop] Auto-reopped %s on channel %s\n", usr->nick,
+              ch->name);
+        }
       }
     }
 
-    FORLISTDEL(node,nnode,BestOps,struct ChanopUser *,cou)
+    FORLISTDEL(node, nnode, BestOps, struct ChanopUser *, cou)
       free(node);
     return;
   }
@@ -88,27 +176,26 @@ check_channel_status(struct Channel *ch)
   if (ch->exops == NULL)
   {
     count = 0;
-    FORLIST(node,ch->ops,struct User*,usr)
+    FORLIST(node, ch->ops, struct User *, usr)
       count++;
     if (count < MINIMUM_OPS)
       return;
   }
 #endif
   /* Now go through all the ops... */
-  FORLIST(node,ch->ops,struct User*,usr)
+  FORLIST(node, ch->ops, struct User *, usr)
   {
     char *md5;
-    FORLIST(node2,HKeywords,char*,hk)
-      if (match(hk, usr->host))
-	continue;
+    FORLIST(node2, HKeywords, char *, hk) if (match(hk, usr->host))
+        continue;
     if (usr->host)
       md5 = getmd5(usr);
-    FORLIST(node2,ch->exops,struct ChanopUser*,cou)
+    FORLIST(node2, ch->exops, struct ChanopUser *, cou)
       if (!memcmp(md5, cou->uhost_md5, 16))
       {
-	cou->last_opped = timenow;
-	cou->slices++;
-	break;
+        cou->last_opped = timenow;
+        cou->slices++;
+        break;
       }
 
     if (node2 == NULL)
@@ -123,8 +210,8 @@ check_channel_status(struct Channel *ch)
   /* Now we simply have to go through and delete the expired
    * ops... 
    */
-  FORLISTDEL(node,nnode,ch->exops,struct ChanopUser*,cou)
-    if ((timenow-cou->last_opped) > EXOP_EXPIRE_TIME)
+  FORLISTDEL(node, nnode, ch->exops, struct ChanopUser *, cou)
+    if ((timenow - cou->last_opped) > EXOP_EXPIRE_TIME)
       remove_from_list(&ch->exops, node);
 }
 
@@ -136,6 +223,7 @@ cleanup_channels(void)
   struct List *node, *nnode, *node2, *nnode2;
   struct User *usr;
   struct Channel *ch;
+  char *chp;
 
   if (timenow - last_reop > CHAN_SLICE_LENGTH)
   {
@@ -143,32 +231,36 @@ cleanup_channels(void)
     last_reop = timenow;
   }
 
-  FORLISTDEL(node,nnode,Channels,struct Channel*,ch)
+  FORLISTDEL(node, nnode, Channels, struct Channel *, ch)
   {
     /* Check the cyops list... */
 #ifdef USE_CYCLE
     if (ch->cycops != NULL && (timenow - ch->cycled) > CYCLE_REJOIN_TIME)
     {
-      FORLISTDEL(node2,nnode2,ch->cycops,struct User*,usr)
-	free(node2);
+      FORLISTDEL(node2, nnode2, ch->cycops, struct User *, usr)
+        free(node2);
       ch->cycops = NULL;
     }
 #endif
 
-  /* Check if it is empty... */
+    /* Check if it is empty... */
     if (ch->ops == NULL && ch->nonops == NULL)
     {
-      if (timenow-ch->last_notempty > 60*60*2)
+      if (timenow - ch->last_notempty > 60 * 60 * 2)
       {
-	remove_from_hash(HASH_CHAN, ch->name);
-	remove_from_list(&Channels, node);
-	FORLISTDEL(node2,nnode2,ch->cycops,struct User*,usr)
-	  free(node2);
-	FORLISTDEL(node2,nnode2,ch->ops,struct User*,usr)
-	  free(node2);
-	FORLISTDEL(node2,nnode2,ch->nonops,struct User*,usr)
-	  free(node2);
-	free(ch);
+        remove_from_hash(HASH_CHAN, ch->name);
+        remove_from_list(&Channels, node);
+        FORLISTDEL(node2, nnode2, ch->cycops, struct User *, usr)
+        {
+          free(node2->data);
+          free(node2);
+        }
+        FORLISTDEL(node2, nnode2, ch->bans, char *, chp)
+        {
+          free(chp);
+          free(node2);
+        }
+        free(ch);
       }
       continue;
     }
@@ -177,8 +269,8 @@ cleanup_channels(void)
       ch->last_notempty = timenow;
     }
 
-  if (doing_reop)
-    check_channel_status(ch);
+    if (doing_reop)
+      check_channel_status(ch);
   }
   if (doing_reop)
     save_channel_opdb();
@@ -191,7 +283,7 @@ kick_excluded(struct Channel *ch, struct User *usr)
   if (IsBanChan(ch))
   {
     send_msg(":%s KICK %s %s :This channel has been closed by "
-	     NETNAME" administration.", sn, ch->name, usr->nick);
+             NETNAME " administration.", sn, ch->name, usr->nick);
     return 1;
   }
 
@@ -199,7 +291,7 @@ kick_excluded(struct Channel *ch, struct User *usr)
   {
     send_msg(":%s MODE %s +b %s!*@*", sn, ch->name, usr->nick);
     send_msg(":%s KICK %s %s :You must be an IRC Operator to join "
-	     "this channel.", sn, ch->name, usr->nick);
+             "this channel.", sn, ch->name, usr->nick);
     return 1;
   }
 
@@ -207,7 +299,7 @@ kick_excluded(struct Channel *ch, struct User *usr)
   {
     send_msg(":%s MODE %s +b %s!*@*", sn, ch->name, usr->nick);
     send_msg(":%s KICK %s %s :You must be an IRC Admin to join "
-	     "this channel.", sn, ch->name, usr->nick);
+             "this channel.", sn, ch->name, usr->nick);
     return 1;
   }
   return 0;
@@ -232,13 +324,18 @@ m_sjoin(char *sender, int parc, char **parv)
   if (!(ch = find_channel(parv[2])))
   {
     ch = malloc(sizeof(*ch));
-    strncpy(ch->name, parv[2], CHANLEN-1)[CHANLEN-1] = 0;
+    strncpy(ch->name, parv[2], CHANLEN - 1)[CHANLEN - 1] = 0;
+    ch->first_ts = newts;
     ch->flags = 0;
     ch->ts = newts;
+    if (ch->first_ts > newts)
+      ch->first_ts = newts;
     ch->ops = NULL;
     ch->nonops = NULL;
     ch->exops = NULL;
+    ch->bans = NULL;
     ch->last_notempty = timenow;
+    ch->modes = 0;
 #ifdef USE_CYCLE
     ch->cycled = 0;
     ch->cycops = NULL;
@@ -246,13 +343,29 @@ m_sjoin(char *sender, int parc, char **parv)
     add_to_list(&Channels, ch);
     add_to_hash(HASH_CHAN, ch->name, ch);
   }
+  for (p = parv[4]; *p; p++)
+    switch (*p)
+    {
+      case 'i':
+        ch->modes |= CHMODE_INVITE;
+        break;
+      case 'l':
+        ch->modes |= CHMODE_LIMIT;
+        break;
+      case 'k':
+        ch->modes |= CHMODE_KEY;
+        break;
+    }
+      
+  ch->ts = newts;
 
   if (ch->ops == NULL && ch->nonops == NULL)
     new = -1;
-  if ((parv[parc-1][0] == '@' || parv[parc-1][1] == '@') && newts < ch->ts)
+  if ((parv[parc - 1][0] == '@' || parv[parc - 1][1] == '@')
+      && newts < ch->ts)
     /* We now have to remove all the ops... */
     move_list(&ch->nonops, &ch->ops);
-  for (p=strtok(parv[parc-1], " "); p; p=strtok(NULL, " "))
+  for (p = strtok(parv[parc - 1], " "); p; p = strtok(NULL, " "))
   {
     int isop = 0;
     struct User *usr;
@@ -277,9 +390,9 @@ m_sjoin(char *sender, int parc, char **parv)
 #endif
 
 #ifdef USE_CYCLE
-    FORLIST(node,ch->cycops,struct User*,usr1)
+    FORLIST(node, ch->cycops, struct User *, usr1)
       if (usr1 == usr)
-	break;
+        break;
     if (ch->cycops != NULL && isop != 0 && usr1 != usr)
     {
       isop = 0;
@@ -296,16 +409,15 @@ m_sjoin(char *sender, int parc, char **parv)
 #ifdef USE_AUTOJUPE
   if ((svr = find_server(sender)) != NULL)
   {
-    if (new==0 && hack && (timenow-svr->introduced) > MAX_SJOIN_DELAY)
+    if (new == 0 && hack && (timenow - svr->introduced) > MAX_SJOIN_DELAY)
     {
       place_autojupe(svr, "[Auto] Attempt to SJOIN giving ops after burst; "
-		     "Probably compromised server.");
+                     "Probably compromised server.");
     }
 #if 0
-    else
-      if (newts < 800000000)
-	place_autojupe(svr, "[Auto] Attempt to SJOIN with invalid TS; "
-		       "Probably compromised server.");
+    else if (newts < 800000000)
+      place_autojupe(svr, "[Auto] Attempt to SJOIN with invalid TS; "
+                     "Probably compromised server.");
 #endif
   }
 #endif
@@ -325,12 +437,26 @@ m_part(char *sender, int parc, char **parv)
     return;
   if ((ch = find_channel(parv[1])) == NULL)
     return;
-  FORLISTDEL(node,nnode,ch->ops,struct User*,usr2)
+  FORLISTDEL(node, nnode, ch->ops, struct User *, usr2)
     if (usr2 == usr)
       remove_from_list(&ch->ops, node);
-  FORLISTDEL(node,nnode,ch->nonops,struct User*,usr2)
+  FORLISTDEL(node, nnode, ch->nonops, struct User *, usr2)
     if (usr2 == usr)
       remove_from_list(&ch->nonops, node);
+  FORLISTDEL(node, nnode, ch->nonops, struct User *, usr2)
+    if (usr2 == usr)
+      remove_from_list(&ch->nonops, node);
+  if (ch->nonops == NULL && ch->ops == NULL)
+  {
+    char *b;
+    ch->modes = 0;
+    FORLISTDEL(node, nnode, ch->bans, char*, b)
+    {
+      free(b);
+      free(node);
+    }
+    ch->bans = NULL;
+  }
 }
 
 void
@@ -346,14 +472,13 @@ m_join(char *sender, int parc, char **parv)
     return;
   if (parv[1][0] != '0' || parv[1][1] != 0)
     return;
-  FORLIST(node,Channels,struct Channel*,ch)
+  FORLIST(node, Channels, struct Channel *, ch)
   {
-    FORLISTDEL(node2,nnode2,ch->nonops,struct User *,usr2)
+    FORLISTDEL(node2, nnode2, ch->nonops, struct User *, usr2)
       if (usr2 == usr)
-	remove_from_list(&ch->nonops, node2);
-    FORLISTDEL(node2,nnode2,ch->ops,struct User *,usr2)
-      if (usr2 == usr)
-	remove_from_list(&ch->ops, node2);
+        remove_from_list(&ch->nonops, node2);
+    FORLISTDEL(node2, nnode2, ch->ops, struct User *, usr2) if (usr2 == usr)
+        remove_from_list(&ch->ops, node2);
   }
 }
 
@@ -367,36 +492,37 @@ m_chmode(char *sender, int parc, char **parv)
   struct List *node, *nnode;
   struct Server *svr;
   int hack = 0;
- 
+
   if ((ch = find_channel(parv[1])) == NULL)
     return;
- 
-  if (ch->cycops != NULL && (usr = find_user(sender))!=NULL)
+
+#ifdef USE_CYCLE
+  if (ch->cycops != NULL && (usr = find_user(sender)) != NULL)
   {
     char *p;
     usr2 = NULL;
-    FORLIST(node,ch->cycops,struct User*,usr2)
-      if (usr2 == usr)
-	break;
+    FORLIST(node, ch->cycops, struct User *, usr2) if (usr2 == usr)
+        break;
     if (usr2 != usr)
     {
       if (parv[2][0] == 0)
-	return;
+        return;
       /* Unset it now! It could block the re-joiners... */
       if (parv[2][0] != '+')
-	parv[2][0] = '-';
-      for (p=parv[2]; *p != 0; p++)
-	if (*p == '+')
-	  *p = '-';
+        parv[2][0] = '-';
+      for (p = parv[2]; *p != 0; p++)
+        if (*p == '+')
+          *p = '-';
       parc -= 2;
       /* Ugly kludge which will hopefully be reliable... */
       while (parc--)
-	parv[2][strlen(parv[2])] = ' ';
+        parv[2][strlen(parv[2])] = ' ';
       send_msg(":%s MODE %s %s", sn, parv[1], parv[2]);
       return;
     }
   }
- 
+#endif
+
   /* MODE #channel +o nick ...
    * Scan for +o or -o...
    */
@@ -407,33 +533,73 @@ m_chmode(char *sender, int parc, char **parv)
   while ((c = *parv[2]++))
     switch (c)
     {
-    case '-':
-      dir = -1;
-      break;
-    case '+':
-      dir = 0;
-      break;
-    case 'o':
-      if (arg >= parc)
-	continue;
-      if ((usr = find_user(parv[arg])) == NULL)
-	continue;
-      FORLISTDEL(node,nnode,ch->ops,struct User*,usr2)
-	if (usr2 == usr)
-	  remove_from_list(&ch->ops, node);
-      FORLISTDEL(node,nnode,ch->nonops,struct User*,usr2)
-	if (usr2 == usr)
-	  remove_from_list(&ch->nonops, node);
-      add_to_list(dir ? &ch->nonops : &ch->ops, usr);
-    case 'v':
-    case 'h':
-    case 'k':
-    case 'l':
-      hack++;
-    case 'b':
-    case 'e':
-    case 'I':
-      arg++;
+      case '-':
+        dir = -1;
+        break;
+      case '+':
+        dir = 0;
+        break;
+      case 'o':
+        if (arg >= parc)
+          continue;
+        if ((usr = find_user(parv[arg])) == NULL)
+          continue;
+        FORLISTDEL(node, nnode, ch->ops, struct User *, usr2) if (usr2 == usr)
+            remove_from_list(&ch->ops, node);
+        FORLISTDEL(node, nnode, ch->nonops, struct User *, usr2)
+          if (usr2 == usr)
+            remove_from_list(&ch->nonops, node);
+        add_to_list(dir ? &ch->nonops : &ch->ops, usr);
+      case 'v':
+      case 'h':
+        arg++;
+        hack++;
+        break;
+      case 'i':
+        hack++;
+        ch->modes |= CHMODE_INVITE;
+        break;
+      case 'k':
+        hack++;
+        arg++;
+        if (dir == 0)
+          ch->modes |= CHMODE_KEY;
+        else
+          ch->modes &= ~CHMODE_KEY;
+        break;
+      case 'l':
+        hack++;
+        if (dir == 0)
+        {
+          arg++;
+          ch->modes |= CHMODE_LIMIT;
+        }
+        else
+          ch->modes &= ~CHMODE_LIMIT;
+        break;
+      case 'b':
+        if (arg >= parc)
+          continue;
+        if (dir == 0)
+          add_to_list(&ch->bans, strdup(parv[arg++]));
+        else 
+        {
+          char *b, *bc;
+          bc = parv[arg++];
+          FORLIST(node, ch->bans, char*,b)
+            if (!strcasecmp(b, bc))
+            {
+              free(bc);
+              remove_from_list(&ch->bans, node);
+              break;
+            }
+        }
+        hack++;
+        break;
+      case 'e':
+      case 'I':
+        arg++;
+        hack++;
     }
 #ifdef USE_AUTOJUPE
   if (hack == 0)
@@ -442,17 +608,15 @@ m_chmode(char *sender, int parc, char **parv)
     place_autojupe(svr, "[Auto] Server mode hack, probably compromised.");
   if ((usr = find_user(sender)) != NULL)
   {
-    FORLIST(node,ch->ops,struct User *,usr2)
-      if (usr2 == usr)
-	break;
+    FORLIST(node, ch->ops, struct User *, usr2) if (usr2 == usr)
+        break;
     if (node == NULL)
-      FORLIST(node,ch->nonops,struct User*,usr2)
-	if (usr2 == usr)
-	  break;
+      FORLIST(node, ch->nonops, struct User *, usr2) if (usr2 == usr)
+          break;
     if (node == NULL)
       place_autojupe(usr->server, "[Auto] Channel mode hack by non-member; "
-		     "Probably compromised.");
- }
+                     "Probably compromised.");
+  }
 #endif
 }
 
@@ -473,53 +637,52 @@ process_smode(const char *name, const char *mode)
     ch->ops = NULL;
     ch->nonops = NULL;
     ch->flags = 0;
-    strncpy(ch->name, name, CHANLEN-1)
-      [CHANLEN-1] = '\0';
+    strncpy(ch->name, name, CHANLEN - 1)[CHANLEN - 1] = '\0';
     add_to_hash(HASH_CHAN, ch->name, ch);
     add_to_list(&Channels, ch);
   }
 
-  for (p=mode; (c=*p); p++)
+  for (p = mode; (c = *p); p++)
     switch (c)
     {
-    case '+':
-      dir = 0;
-      break;
-    case '-':
-      dir = -1;
-      break;
-    case 'b':
-      if (dir)
-	ch->flags &= ~CHFLAG_BANNED;
-      else
-	ch->flags |= CHFLAG_BANNED;
-      break;
-    case 'o':
-      if (dir)
-	ch->flags &= ~CHFLAG_OPERONLY;
-      else
-	ch->flags |= CHFLAG_OPERONLY;
-      break;
-    case 'a':
-      if (dir)
-	ch->flags &= ~CHFLAG_ADMINONLY;
-      else
-	ch->flags |= CHFLAG_ADMINONLY;
-      break;
+      case '+':
+        dir = 0;
+        break;
+      case '-':
+        dir = -1;
+        break;
+      case 'b':
+        if (dir)
+          ch->flags &= ~CHFLAG_BANNED;
+        else
+          ch->flags |= CHFLAG_BANNED;
+        break;
+      case 'o':
+        if (dir)
+          ch->flags &= ~CHFLAG_OPERONLY;
+        else
+          ch->flags |= CHFLAG_OPERONLY;
+        break;
+      case 'a':
+        if (dir)
+          ch->flags &= ~CHFLAG_ADMINONLY;
+        else
+          ch->flags |= CHFLAG_ADMINONLY;
+        break;
     }
 
-  FORLISTDEL(node,nnode,ch->ops,struct User*,usr)
+  FORLISTDEL(node, nnode, ch->ops, struct User *, usr)
     if (kick_excluded(ch, usr))
-    {
-      remove_from_list(&ch->ops, node);
-      continue;
-    }
+  {
+    remove_from_list(&ch->ops, node);
+    continue;
+  }
 
-  FORLISTDEL(node,nnode,ch->nonops,struct User*,usr)
+  FORLISTDEL(node, nnode, ch->nonops, struct User *, usr)
     if (kick_excluded(ch, usr))
-    {
-      remove_from_list(&ch->nonops, node);
-      continue;
-    }
+  {
+    remove_from_list(&ch->nonops, node);
+    continue;
+  }
 }
 #endif

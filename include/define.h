@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.9 2001/12/02 03:59:39 a1kmm Exp $
+ * $Id: define.h,v 1.10 2001/12/02 06:59:06 a1kmm Exp $
  */
 
 /* The maximum number of clients per user@host */
@@ -42,6 +42,7 @@
 #define EXOP_EXPIRE_TIME 2*60 /* *60 */
 #define CHAN_SLICE_LENGTH 5
 #define CYCLE_REJOIN_TIME 30
+#define CHAN_RECOVER_TIME 10*60
 
 #define NETNAME "test net"
 #define LOGFILE PREFIX "efserv.log"
@@ -76,6 +77,9 @@
 #define CHFLAG_OPERONLY       0x00000002
 #define CHFLAG_ADMINONLY      0x00000004
 #define SMODES CHFLAG_BANNED | CHFLAG_OPERONLY | CHFLAG_ADMINONLY
+#define CHMODE_INVITE         0x00000001
+#define CHMODE_KEY            0x00000002
+#define CHMODE_LIMIT          0x00000004
 
 #define IsBanChan(x) (x->flags & CHFLAG_BANNED)
 #define IsOperChan(x) (x->flags & CHFLAG_OPERONLY)
