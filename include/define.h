@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.3 2001/06/01 09:31:23 a1kmm Exp $
+ * $Id: define.h,v 1.4 2001/06/02 04:21:03 a1kmm Exp $
  */
 
 
@@ -26,10 +26,13 @@
 #define SERVLEN 80
 #define CHANLEN 255
 
+#define USE_AUTOJUPE
+
 #define MAXCLONES_UHOST 4
 #define MAXCLONES_HOST 6
+#define MAX_SJOIN_DELAY 60
 
-#define JUPE_EXPIRE_TIME 45 /* *60 */
+#define JUPE_EXPIRE_TIME 45 *60
 #define MINIMUM_OPS  0 /* 4 */
 #define EXOP_EXPIRE_TIME 2*60 /* *60 */
 #define CHAN_SLICE_LENGTH 5

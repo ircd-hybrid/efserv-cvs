@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.5 2001/05/31 08:52:03 a1kmm Exp $
+ * $Id: clients.c,v 1.6 2001/06/02 04:21:02 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +32,45 @@ void add_cloner(char*,char*);
 void remove_cloner(char*,char*);
 void destroy_server(struct Server *svr);
 
+#ifdef USE_AUTOJUPE
+void
+place_autojupe(struct Server *svr, const char *reason)
+{
+ struct Jupe *jp;
+ if (first_server == NULL || svr == first_server)
+  return;
+ /* Ignore if already juped... */
+ if (IsJuped(svr))
+  return;
+ /* Now check if there is a pending vote to jupe... */
+ if (svr->jupe != NULL)
+ {
+  jp = svr->jupe;
+  send_msg(":%s WALLOPS :Vote to jupe %s advanced due to auto-jupe: %s",
+           sn, svr->name, reason);
+  log("[AutoJupe] Vote to jupe %s advanced due to auto-jupe: %s\n",
+      svr->name, reason);
+ }
+ else
+ {
+  jp = malloc(sizeof(*jp));
+  send_msg(":%s WALLOPS :Activating auto-jupe against %s :%s", sn,
+           svr->name, reason);
+  log("[AutoJupe] Auto-jupe activated for %s: %s\n",
+      svr->name, reason);
+ }
+ strncpy(jp->reason, reason, 254)[254] = 0;
+ jp->flags = 0;
+ jp->score = 15;
+ jp->last_active = timenow;
+ jp->jupevotes = NULL;
+ destroy_server_links(svr);
+ svr->jupe = jp;
+ svr->flags |= SERVFLAG_JUPED;
+ send_msg(":%s SQUIT %s :Juped: %s", sn, svr->name, reason);
+ send_msg("SERVER %s :Juped: %s", svr->name, reason);
+}
+#endif
 
 void
 cleanup_jupes(void)
@@ -161,13 +200,17 @@ m_server(char *sender, int parc, char **parv)
   return;
  if (strchr(parv[1], '.') == NULL)
   return;
- if (find_server(parv[1]))
+ if ((svr = find_server(parv[1])) != NULL)
+ {
+  svr->introduced = timenow;
   return;
+ }
  svr = malloc(sizeof(*svr));
  strncpy(svr->name, parv[1], SERVLEN-1)[SERVLEN-1] = 0;
  svr->flags = SERVFLAG_ACTIVE;
  svr->node = add_to_list(&Servers, svr);
  svr->jupe = NULL;
+ svr->introduced = timenow;
  add_to_hash(HASH_SERVER, svr->name, svr);
  if (first_server == NULL)
  {

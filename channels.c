@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: channels.c,v 1.6 2001/05/31 08:52:03 a1kmm Exp $
+ * $Id: channels.c,v 1.7 2001/06/02 04:21:02 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -135,7 +135,11 @@ cleanup_channels(void)
   if (ch->ops == NULL && ch->nonops == NULL)
   {
    if (timenow-ch->last_notempty > 60*60*2)
+   {
+    remove_from_hash(HASH_CHAN, ch->name);
     remove_from_list(&Channels, node);
+    free(ch);
+   }
    continue;
   } else
    ch->last_notempty = timenow;
@@ -178,13 +182,15 @@ void
 m_sjoin(char *sender, int parc, char **parv)
 {
  struct Channel *ch;
+ struct Server *svr;
  time_t newts;
+ int hack = 0, new = 0;
  char *p;
  /* :sender SJOIN ts channel + :@x ... */
  if (parc < 5)
   return;
  cleanup_channels();
- newts = strtoul(parv[1], NULL, 10); 
+ newts = strtoul(parv[1], NULL, 10);
  if (!(ch = find_channel(parv[2])))
  {
   ch = malloc(sizeof(*ch));
@@ -198,6 +204,8 @@ m_sjoin(char *sender, int parc, char **parv)
   add_to_list(&Channels, ch);
   add_to_hash(HASH_CHAN, ch->name, ch);
  }
+ if (ch->ops == NULL && ch->nonops == NULL)
+  new = -1;
  if ((parv[parc-1][0] == '@' || parv[parc-1][1] == '@') && newts < ch->ts)
   /* We now have to remove all the ops... */
   move_list(&ch->nonops, &ch->ops);
@@ -209,6 +217,7 @@ m_sjoin(char *sender, int parc, char **parv)
   {
    p++;
    isop++;
+   hack++;
   }
   if (*p == '+' || *p == '%')
    p++;
@@ -220,6 +229,21 @@ m_sjoin(char *sender, int parc, char **parv)
 #endif
   add_to_list(isop ? &ch->ops : &ch->nonops, usr);
  }
+#ifdef USE_AUTOJUPE
+ if ((svr = find_server(sender)) != NULL)
+ {
+  if (new==0 && hack && (timenow-svr->introduced) > MAX_SJOIN_DELAY)
+  {
+   place_autojupe(svr, "[Auto] Attempt to SJOIN giving ops after burst; "
+                  "Probably compromised server.");
+  }
+#if 0
+  else if (newts < 800000000)
+  place_autojupe(svr, "[Auto] Attempt to SJOIN with invalid TS; "
+                 "Probably compromised server.");
+#endif
+ }
+#endif
 }
 
 void
@@ -275,11 +299,16 @@ m_chmode(char *sender, int parc, char **parv)
  struct Channel *ch;
  struct User *usr, *usr2;
  struct List *node, *nnode;
+ struct Server *svr;
+ int hack = 0;
+ 
+ if ((ch = find_channel(parv[1])) == NULL)
+  return;
+ 
  /* MODE #channel +o nick ... */
  /* Scan for +o or -o... */
  if (parc < 4)
   return;
- ch = find_channel(parv[1]);
  while ((c = *parv[2]++))
   switch (c)
   {
@@ -303,12 +332,33 @@ m_chmode(char *sender, int parc, char **parv)
     add_to_list(dir ? &ch->nonops : &ch->ops, usr);
    case 'v':
    case 'h':
-   case 'b':
-   case 'e':
    case 'k':
    case 'l':
+    hack++;
+   case 'b':
+   case 'e':
+   case 'I':
     arg++;
   }
+#ifdef USE_AUTOJUPE
+ if (hack == 0)
+  return;
+ if ((svr = find_server(sender)) != NULL)
+  place_autojupe(svr, "[Auto] Server mode hack, probably compromised.");
+ if ((usr = find_user(sender)) != NULL)
+ {
+  FORLIST(node,ch->ops,struct User *,usr2)
+   if (usr2 == usr)
+    break;
+  if (node == NULL)
+   FORLIST(node,ch->nonops,struct User*,usr2)
+    if (usr2 == usr)
+     break;
+  if (node == NULL)
+   place_autojupe(usr->server, "[Auto] Channel mode hack by non-member; "
+                  "Probably compromised.");
+ }
+#endif
 }
 
 #ifdef USE_SMODE

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: struct.h,v 1.1 2001/05/31 08:52:08 a1kmm Exp $
+ * $Id: struct.h,v 1.2 2001/06/02 04:21:04 a1kmm Exp $
  */
 
 struct Command
@@ -41,6 +41,7 @@ struct Server
  struct List *node;
  struct Server *uplink;
  struct Jupe *jupe;
+ time_t introduced;
 };
 
 struct Channel

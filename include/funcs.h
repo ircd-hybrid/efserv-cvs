@@ -15,6 +15,9 @@ void cleanup_hosts(void);
 void wipe_type_from_hash(int type, void (*cdata)(void*));
 void save_channel_opdb(void);
 void load_channel_opdb(void);
+#ifdef USE_AUTOJUPE
+void place_autojupe(struct Server *svr, const char *reason);
+#endif
 
 #ifdef __GNUC__
 void fatal_error(const char *, ...)
