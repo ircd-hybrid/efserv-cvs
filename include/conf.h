@@ -1,5 +1,5 @@
 /*
- *  config.h: Defines stuff relating to the config parser.
+ *  conf.h: Defines stuff relating to the config parser.
  *  This is part of efserv, a services.int implementation.
  *  efserv is Copyright(C) 2001 by Andrew Miller, and others.
  *  This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: conf.h,v 1.1 2001/05/31 08:52:07 a1kmm Exp $
+ * $Id: conf.h,v 1.2 2001/11/11 21:22:24 wcampbel Exp $
  */
 
 extern struct yystype

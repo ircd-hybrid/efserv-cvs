@@ -16,8 +16,8 @@ log.o: log.c includes/define.h includes/struct.h
 match.o: match.c
 md5.o: md5.c includes/define.h includes/struct.h
 msg.o: msg.c includes/define.h includes/struct.h includes/utils.h \
- includes/funcs.h includes/config.h
+ includes/funcs.h includes/conf.h
 utils.o: utils.c includes/define.h includes/utils.h
 sconfig.tab.o: sconfig.tab.c includes/define.h includes/struct.h \
- includes/utils.h includes/funcs.h includes/config.h
-lex.yy.o: lex.yy.c includes/config.h sconfig.tab.h
+ includes/utils.h includes/funcs.h includes/conf.h
+lex.yy.o: lex.yy.c includes/conf.h sconfig.tab.h
