@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: msg.c,v 1.10 2001/11/11 22:13:52 wcampbel Exp $
+ * $Id: msg.c,v 1.11 2001/11/12 00:43:12 wcampbel Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -95,7 +95,10 @@ pm_smode(struct User *usr, char *str)
   return;
  }
  process_smode(channel, modes);
+#if 0
+ /* XXX - This function isn't written yet... */
  write_dynamic_config();
+#endif
 }
 #endif
 

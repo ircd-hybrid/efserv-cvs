@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: config.h,v 1.1 2001/11/11 22:13:52 wcampbel Exp $
+ * $Id: config.h,v 1.2 2001/11/12 00:43:12 wcampbel Exp $
  */
 
 #ifndef CONFIG_H
@@ -35,6 +35,15 @@
  */
 
 #define USE_CYCLE
+
+/* USE_SMODE - Enable the SMODE command, set channels banned (closed),
+ * oper only, or admin only.
+ *
+ * XXX - Not yet complete, it will not save dynamic settings between
+ *       restarts
+ */
+
+#undef USE_SMODE
 
 /* These should be set to the maximum permitted by any irc
  * server on the network

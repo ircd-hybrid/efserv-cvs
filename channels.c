@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: channels.c,v 1.11 2001/11/11 22:13:52 wcampbel Exp $
+ * $Id: channels.c,v 1.12 2001/11/12 00:43:12 wcampbel Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -184,7 +184,7 @@ cleanup_channels(void)
     save_channel_opdb();
 }
 
-#ifdef USE_SMODES
+#ifdef USE_SMODE
 int
 kick_excluded(struct Channel *ch, struct User *usr)
 {
@@ -271,7 +271,7 @@ m_sjoin(char *sender, int parc, char **parv)
     if (!(usr = find_user(p)))
       continue;
 
-#ifdef USE_SMODES
+#ifdef USE_SMODE
     if (kick_excluded(ch, usr))
       continue;
 #endif
