@@ -1,3 +1,38 @@
+a1kmm       2001/12/10 02:04:52 EST	(20011210_0)
+
+  Modified files:
+    .                    .depend Makefile.in channels.c commands.c 
+                         modules.c msg.c utils.c 
+    include              config.h define.h struct.h utils.h 
+  Added files:
+    .                    dtheader.h dyntfuncs.c dyntrans.l 
+                         dyntrans.y 
+    include              dyntrans.h 
+  Log:
+  - Dynamic translation(dyntrans) code added. This means that we should be
+    able to make major changes including adding or rearranging fields within
+    structures without restarting efserv, only reloading.
+  
+  Revision  Changes    Path
+  1.8       +7 -1      efserv/.depend
+  1.10      +26 -4     efserv/Makefile.in
+  1.14      +58 -3     efserv/channels.c
+  1.11      +3 -1      efserv/commands.c
+  1.1       +30 -0     efserv/dtheader.h (new)
+  1.1       +453 -0    efserv/dyntfuncs.c (new)
+  1.1       +100 -0    efserv/dyntrans.l (new)
+  1.1       +282 -0    efserv/dyntrans.y (new)
+  1.4       +3 -1      efserv/include/config.h
+  1.11      +2 -2      efserv/include/define.h
+  1.1       +72 -0     efserv/include/dyntrans.h (new)
+  1.7       +5 -1      efserv/include/struct.h
+  1.2       +3 -1      efserv/include/utils.h
+  1.7       +39 -16    efserv/modules.c
+  1.12      +12 -12    efserv/msg.c
+  1.9       +2 -4      efserv/utils.c
+
+
+
 *** 20011202_5 by wcampbel
 Update to the README
 
