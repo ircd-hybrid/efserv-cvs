@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.2 2001/06/01 08:52:13 a1kmm Exp $
+ * $Id: define.h,v 1.3 2001/06/01 09:31:23 a1kmm Exp $
  */
 
 
@@ -35,8 +35,8 @@
 #define CHAN_SLICE_LENGTH 5
 
 #define NETNAME "test net"
-#define LOGFILE "efserv.log"
-#define CHANNEL_DB "efchans.db"
+#define LOGFILE PREFIX "efserv.log"
+#define CHANNEL_DB PREFIX "efchans.db"
 #define VERSION "pre0.1-test"
 
 #define ETCPATH PREFIX "etc/"
