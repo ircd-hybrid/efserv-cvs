@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.8 2001/12/02 03:27:14 a1kmm Exp $
+ * $Id: define.h,v 1.9 2001/12/02 03:59:39 a1kmm Exp $
  */
 
 /* The maximum number of clients per user@host */
@@ -46,6 +46,7 @@
 #define NETNAME "test net"
 #define LOGFILE PREFIX "efserv.log"
 #define CHANNEL_DB PREFIX "efchans.db"
+#define WARNINGFILE PREFIX "abuse.warn"
 #define VERSION "pre0.1-test"
 
 #define OKILL_MAX 10

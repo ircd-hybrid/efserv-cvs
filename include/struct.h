@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: struct.h,v 1.4 2001/07/30 06:51:06 a1kmm Exp $
+ * $Id: struct.h,v 1.5 2001/12/02 03:59:39 a1kmm Exp $
  */
 #include "define.h"
 
@@ -88,7 +88,7 @@ struct VoteServer
 struct Host
 {
  char host[HOSTLEN+USERLEN+1];
- int count, rate, full;
+ int count, rate, full, warned;
  time_t last_recalc, last_report;
 };
 

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.12 2001/12/02 03:27:12 a1kmm Exp $
+ * $Id: clients.c,v 1.13 2001/12/02 03:59:37 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +30,7 @@
 
 void cleanup_hosts(void);
 void m_chmode(char *sender, int parc, char **parv);
-void add_cloner(char*,char*);
+void add_cloner(char*,char*,char*);
 void remove_cloner(char*,char*);
 void destroy_server(struct Server *svr);
 
@@ -186,7 +186,7 @@ m_nick(char *sender, int parc, char **parv)
   usr->node = add_to_list(&Users, usr);
   usr->monnode = NULL;
   usr->sa = NULL;
-  add_cloner(usr->user, usr->host);
+  add_cloner(usr->nick, usr->user, usr->host);
  } else
  {
   /* :nick NICK newnick */
@@ -198,7 +198,7 @@ m_nick(char *sender, int parc, char **parv)
   remove_from_hash(HASH_USER, usr->nick);
   strncpy(usr->nick, parv[1], NICKLEN-1)[NICKLEN-1] = 0;
   add_to_hash(HASH_USER, usr->nick, usr);
-  add_nickchange(usr->user, usr->host);
+  add_nickchange(usr->nick, usr->user, usr->host);
  }
 }
 

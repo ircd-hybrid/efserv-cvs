@@ -1,0 +1,9 @@
+This message is the last warning any client from this user@host,
+or host if this is due to clients from several usernames, until
+all clients from that host log out for an extended period of time.
+If any more offenses are detected, you will be reported to all
+active monitors on this network. This will probably result in
+a network-wide ban. To prevent this from happening, you should
+remove any clones you have on the network, and be careful not
+to flood the network by changing your nick more than once every
+10 seconds.

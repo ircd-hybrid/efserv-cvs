@@ -16,9 +16,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clones.c,v 1.8 2001/12/02 03:27:12 a1kmm Exp $
+ * $Id: clones.c,v 1.9 2001/12/02 03:59:38 a1kmm Exp $
  */
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include "config.h"
@@ -49,10 +50,25 @@ cleanup_hosts(void)
 }
 
 void
-report_cloner(struct Host *h, char *term)
+report_cloner(struct Host *h, char *term, char *onick)
 {
   struct List *node;
   struct User *usr;
+
+  if (h->warned == 0)
+  {
+    FILE *warning_file = fopen(WARNINGFILE, "r");
+    char buffer[512];
+    h->warned = 1;
+    send_msg(":%s NOTICE %s :You have been detected as a %s offender.",
+             sn, onick, term);
+    if (warning_file == NULL)
+      return;
+    while (fgets(buffer, 512, warning_file))
+      send_msg(":%s NOTICE %s :%s", sn, onick, buffer);
+    fclose(warning_file);
+    return;
+  }
 
   if ((timenow - h->last_report) < 30)
     return;
@@ -69,7 +85,7 @@ report_cloner(struct Host *h, char *term)
 }
 
 void
-add_cloner(char *user, char *host)
+add_cloner(char *nick, char *user, char *host)
 {
   struct Host *h1, *h2;
   char uah[HOSTLEN+USERLEN+1];
@@ -85,7 +101,7 @@ add_cloner(char *user, char *host)
     h1 = malloc(sizeof(*h1));
     strncpy(h1->host, uah, HOSTLEN+USERLEN)
       [HOSTLEN+USERLEN] = '\0';
-
+    h1->warned = 0;
     h1->count = h1->rate = 0;
     h1->full = 1;
     h1->last_recalc = timenow;
@@ -102,6 +118,7 @@ add_cloner(char *user, char *host)
     h2->count = h2->rate = h2->full = 0;
     h2->last_recalc = timenow;
     h2->last_report = 0;
+    h2->warned = 0;
     add_to_hash(HASH_HOST, h2->host, h2);
     add_to_list(&Hosts, h2);
   }
@@ -121,28 +138,28 @@ add_cloner(char *user, char *host)
   h2->rate++;
   if (h2->count > MAXCLONES_HOST)
   {
-    report_cloner(h2, "CLONES");
+    report_cloner(h2, "CLONES", nick);
     return;
   }
   if (h1->count > MAXCLONES_UHOST)
   {
-    report_cloner(h1, "CLONES");
+    report_cloner(h1, "CLONES", nick);
     return;
   }
   if (h2->rate > MAXNICKRATE_HOST)
   {
-    report_cloner(h2, "NICKFLOODER");
+    report_cloner(h2, "NICKFLOODER", nick);
     return;
   }
   if (h1->rate > MAXNICKRATE_UHOST)
   {
-    report_cloner(h1, "NICKFLOODER");
+    report_cloner(h1, "NICKFLOODER", nick);
     return;
   }
 }
 
 void
-add_nickchange(char *user, char *host)
+add_nickchange(char *nick, char *user, char *host)
 {
   struct Host *h1, *h2;
   char uah[HOSTLEN+USERLEN+1];
@@ -171,12 +188,12 @@ add_nickchange(char *user, char *host)
   h2->rate++;
   if (h2->rate > MAXNICKRATE_HOST)
   {
-    report_cloner(h2, "NICKFLOODER");
+    report_cloner(h2, "NICKFLOODER", nick);
     return;
   }
   if (h1->rate > MAXNICKRATE_UHOST)
   {
-    report_cloner(h1, "NICKFLOODER");
+    report_cloner(h1, "NICKFLOODER", nick);
     return;
   }
 }
