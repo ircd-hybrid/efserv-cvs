@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: efserv.h,v 1.7 2001/05/30 04:10:15 a1kmm Exp $
+ * $Id: efserv.h,v 1.8 2001/05/31 07:52:10 a1kmm Exp $
  */
 
 #include <time.h>
@@ -30,8 +30,9 @@
 #define MAXCLONES_UHOST 4
 #define MAXCLONES_HOST 6
 
-#define JUPE_EXPIRE_TIME 45*60
-// #define MINIMUM_OPS 4
+#define JUPE_EXPIRE_TIME 45 /* *60 */
+#define MINIMUM_OPS  0 /* 4 */
+#define EXOP_EXPIRE_TIME 2*60 /* *60 */
 #define CHAN_SLICE_LENGTH 5
 
 #define NETNAME "test net"
@@ -163,7 +164,7 @@ struct List
 extern struct Command Commands[];
 extern struct Server *first_server;
 extern struct List *Servers, *Users, *Channels, *Hosts, *Monitors,
-                   *serv_admins, *VoteServers, *Hubs;
+                   *serv_admins, *VoteServers, *Hubs, *HKeywords;
 extern struct Server *first_server;
 extern char *server_name, *server_pass, *server_host, *sn;
 extern int port;

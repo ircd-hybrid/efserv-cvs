@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: msg.c,v 1.4 2001/05/30 04:10:16 a1kmm Exp $
+ * $Id: msg.c,v 1.5 2001/05/31 07:52:11 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -159,6 +159,7 @@ pm_jupe(struct User *usr, char *str)
    ssvr = malloc(sizeof(*ssvr));
    strncpy(ssvr->name, svr, SERVLEN-1)[SERVLEN-1] = 0;
    ssvr->flags = 0;
+   ssvr->uplink = NULL;
    ssvr->node = add_to_list(&Servers, ssvr);
    add_to_hash(HASH_SERVER, ssvr->name, ssvr);
   }

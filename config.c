@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: config.c,v 1.6 2001/05/30 04:10:15 a1kmm Exp $
+ * $Id: config.c,v 1.7 2001/05/31 07:52:10 a1kmm Exp $
  */
 
 #include "efserv.h"
@@ -181,6 +181,7 @@ do_rehash(void)
  struct ServAdmin *sa;
  struct VoteServer *vs;
  struct Hub *hub;
+ char *kw;
  FORLISTDEL(node,nnode,serv_admins,struct ServAdmin*,sa)
  {
   free(node);
@@ -200,8 +201,14 @@ do_rehash(void)
   free(hub);
   free(node);
  }
+ FORLISTDEL(node,nnode,HKeywords,char*,kw)
+ {
+  free(kw);
+  free(node);
+ }
  VoteServers = NULL;
  serv_admins = NULL;
  Hubs = NULL;
+ HKeywords = NULL;
  read_all_config();
 }

@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: sconfig.l,v 1.2 2001/05/30 04:10:16 a1kmm Exp $
+ * $Id: sconfig.l,v 1.3 2001/05/31 07:52:11 a1kmm Exp $
  */
 
 %option case-insensitive
@@ -34,6 +34,7 @@
 #include <strings.h>
 #include <ctype.h>
 int lineno = 1;
+#define YY_NO_UNPUT
 %}
 
 ws        [ \t\r]*
@@ -68,7 +69,7 @@ server { return SERVER; }
 user { return USER; }
 hub { return HUB; }
 minimum_servers { return MINSERVS; }
-
+noreop { return NOREOP; }
 .		        { return yytext[0]; }
 <<EOF>> { yyterminate(); }
 %%

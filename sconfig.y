@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: sconfig.y,v 1.3 2001/05/30 04:10:17 a1kmm Exp $
+ * $Id: sconfig.y,v 1.4 2001/05/31 07:52:11 a1kmm Exp $
  */
 
 %{
@@ -49,6 +49,7 @@
 %token SERVER
 %token HUB
 %token MINSERVS
+%token NOREOP
 %%
 
 conf: conf conf_item | conf_item;
@@ -56,7 +57,8 @@ conf: conf conf_item | conf_item;
 conf_item: general_block |
            admin_block |
            hub_block |
-           server_block;
+           server_block |
+           noreop_block;
 
 general_block: GENERAL '{' general_items '}' ';';
 
@@ -232,4 +234,10 @@ server_name: NAME '=' QSTRING
  add_to_list(&vs->names, strdup(yylval.string));
 } ';';
 
+noreop_block: NOREOP '{' noreop_items '}' ';';
+noreop_items: noreop_items noreop_host | noreop_host;
+noreop_host: HOST '=' QSTRING
+{
+ add_to_list(&HKeywords, strdup(yylval.string));
+} ';';
 %%

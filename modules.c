@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: modules.c,v 1.3 2001/05/30 04:10:16 a1kmm Exp $
+ * $Id: modules.c,v 1.4 2001/05/31 07:52:11 a1kmm Exp $
  */
 
 #define PATH "/home/andrew/scratch/efserv/"
@@ -31,7 +31,7 @@ int connected = 0;
 
 struct List *Servers = NULL, *Users = NULL, *Channels = NULL,
             *Hosts = NULL, *Monitors = NULL, *VoteServers = NULL,
-            *Hubs = NULL;
+            *Hubs = NULL, *HKeywords = NULL;
 FILE *logfile = NULL;
 struct Server *first_server = NULL;
 void *mmod;

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: channels.c,v 1.4 2001/05/30 04:10:14 a1kmm Exp $
+ * $Id: channels.c,v 1.5 2001/05/31 07:52:10 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,6 +30,7 @@ check_channel_status(struct Channel *ch)
  int count = 0, i;
  struct ChanopUser *cou, *cou2;
  struct User *usr;
+ char *hk;
  if (server_count < minimum_servers)
   return;
  if (ch->ops == NULL)
@@ -84,7 +85,12 @@ check_channel_status(struct Channel *ch)
  /* Now go through all the ops... */
  FORLIST(node,ch->ops,struct User*,usr)
  {
-  char *md5 = getmd5(usr);
+  char *md5;
+  FORLIST(node2,HKeywords,char*,hk)
+   if (match(hk, usr->host))
+    continue;
+  if (usr->host)
+  md5 = getmd5(usr);
   FORLIST(node2,ch->exops,struct ChanopUser*,cou)
    if (!memcmp(md5, cou->uhost_md5, 16))
    {
@@ -104,7 +110,7 @@ check_channel_status(struct Channel *ch)
  /* Now we simply have to go through and delete the expired
   * ops... */
  FORLISTDEL(node,nnode,ch->exops,struct ChanopUser*,cou)
-  if ((timenow-cou->last_opped) > 7*24*60*60)
+  if ((timenow-cou->last_opped) > EXOP_EXPIRE_TIME)
    remove_from_list(&ch->exops, node);
 }
 
