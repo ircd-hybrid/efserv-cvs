@@ -1,6 +1,7 @@
 /*
  *  efserv.c: The startup and other miscellaneous efserv functions.
  *  This is part of efserv, a services.int implementation.
+ *  efserv is Copyright(C) 2001 by Andrew Miller, and others.
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -9,11 +10,13 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Library General Public License for more details.
+ *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ *    MA  02111-1307  USA.
+ * $Id: efserv.c,v 1.4 2001/05/26 01:41:03 a1kmm Exp $
  */
 
 #include <stdarg.h>
@@ -27,8 +30,9 @@
 #include <string.h>
 #include "efserv.h"
 
-int server_fd, send_error = 0;
+int send_error = 0;
 time_t timenow;
+extern int server_fd;
 
 void init_hash(void);
 void read_all_config(void);
@@ -102,18 +106,6 @@ send_msg(char *msg, ...)
 }
 
 void
-hash_commands(void)
-{
- struct Command *cmd;
- for (cmd=Commands; cmd; cmd++)
- {
-  if (cmd->name == NULL)
-   return;
-  add_to_hash(HASH_COMMAND, cmd->name, cmd);
- }
-}
-
-void
 parse(char *msg, int len)
 {
  struct Command *cmd;
@@ -152,11 +144,11 @@ parse(char *msg, int len)
 void
 do_main_loop(void)
 {
- char read_buffer[512], *p = read_buffer, *pe = read_buffer, *m;
+ char read_buffer[2048], *p = read_buffer, *pe = read_buffer, *m;
  int rv, skip = 0;
- while (-1)
+ while (reload_module == 0 && die == 0)
  {
-  if ((rv = read(server_fd, p, 512-(pe-read_buffer))) <= 0)
+  if ((rv = read(server_fd, p, 2048-(pe-read_buffer))) <= 0)
    return;
   timenow = time(0);
   m = p;
@@ -175,6 +167,8 @@ do_main_loop(void)
      break;
     m = p;
    }
+  if (m == read_buffer+2048)
+   skip = 1;
   if (m != read_buffer && m != pe)
   {
    memmove(read_buffer, m, pe-m);
@@ -186,13 +180,12 @@ do_main_loop(void)
    p = read_buffer;
    pe = read_buffer;
    m = read_buffer;
-   skip = 1;
   }
  }
 }
 
-int
-main(int argc, char **argv)
+void
+do_setup(void)
 {
  init_hash();
  read_all_config();
@@ -205,6 +198,5 @@ main(int argc, char **argv)
  send_msg("SERVER %s 1 : * Services *", server_name);
  send_msg("NICK %s 1 1 +o services %s %s :* Services *", sn,
           server_name, server_name);
- do_main_loop();
- return 0;
+ return;
 }

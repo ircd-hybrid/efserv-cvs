@@ -1,6 +1,7 @@
 /*
  *  efserv.h: The main header file for efserv.
  *  This is part of efserv, a services.int implementation.
+ *  efserv is Copyright(C) 2001 by Andrew Miller, and others.
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -9,20 +10,25 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Library General Public License for more details.
+ *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ *    MA  02111-1307  USA.
+ * $Id: efserv.h,v 1.4 2001/05/26 01:41:03 a1kmm Exp $
  */
 
 #include <time.h>
 
 #define NICKLEN 20
-#define HOSTLEN 40
+#define HOSTLEN 64
 #define USERLEN 40
 #define SERVLEN 80
 #define CHANLEN 255
+
+#define MAXCLONES_UHOST 4
+#define MAXCLONES_HOST 10
 
 #define NETNAME "test net"
 
@@ -36,7 +42,7 @@ struct User
 {
  char nick[NICKLEN], user[USERLEN], host[HOSTLEN];
  unsigned long flags;
- struct List *node;
+ struct List *node, *monnode;
  struct Server *server;
 };
 
@@ -60,12 +66,28 @@ struct ServAdmin
  char name[NICKLEN], pass[NICKLEN];
 };
 
+struct Host
+{
+ char host[HOSTLEN+USERLEN+1];
+ int count, rate, full;
+ time_t last_recalc, last_report;
+};
+
 enum
 {
  HASH_COMMAND,
  HASH_SERVER,
  HASH_USER,
  HASH_CHAN,
+ HASH_HOST,
+};
+
+enum
+{
+ ALEVEL_ADMIN,
+ ALEVEL_OPER,
+ ALEVEL_SERVADMIN,
+ ALEVEL_ANY,
 };
 
 struct HashEntry
@@ -84,9 +106,12 @@ struct List
 
 extern struct Command Commands[];
 extern struct Server *first_server;
+extern struct List *Servers, *Users, *Channels, *Hosts, *Monitors;
+extern struct Server *first_server;
 extern char *server_name, *server_pass, *server_host, *sn;
 extern int port;
-extern struct List *Channels;
+extern int reload_module, die;
+extern time_t timenow;
 
 void add_to_hash(int type, char *name, void *data);
 void remove_from_hash(int type, char *name);
@@ -98,12 +123,12 @@ void process_smode(const char *chname, const char *mode);
 int send_msg(char *msg, ...);
 void write_dynamic_config(void);
 int verify_admin(const char*, const char*);
-
-extern time_t timenow;
+void hash_commands(void);
 
 #define find_server(name) (struct Server*)find_in_hash(HASH_SERVER,name)
 #define find_user(name) (struct User*)find_in_hash(HASH_USER,name)
 #define find_channel(name) (struct Channel*)find_in_hash(HASH_CHAN,name)
+#define find_host(name) (struct Host*)find_in_hash(HASH_HOST,name)
 
 #define UFLAG_ADMIN           0x00000001
 #define UFLAG_OPER            0x00000002

@@ -1,0 +1,13 @@
+\039services.int\03 provides services to help IRC administrators manage their
+networks better.
+To use it, you must oper up with admin O:line and set yourself +a. Then you
+can interface it with:
+\035/msg Services command ...
+The following commands are supported:
+- JUPE servername reason - Jupes a server.
+- SMODE #channel {([+|-])[a|o|b]}+ - Set a channel admin only, oper only, or banned.
+- ADMIN nick pass - Makes you a services admin.
+- REOP #channel nick - Regains ops in a channel.
+- HELP - Requests help.
+This services was started by Andrew Miller(A1kmm)<a1kmm@mware.virtualave.net>
+and contributed to by many others.

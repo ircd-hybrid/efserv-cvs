@@ -1,0 +1,289 @@
+/*
+ *  msg.c: Outside interaction with the services.
+ *  This is part of efserv, a services.int implementation.
+ *  efserv is Copyright(C) 2001 by Andrew Miller, and others.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ *    MA  02111-1307  USA.
+ * $Id: msg.c,v 1.1 2001/05/26 01:41:04 a1kmm Exp $
+ */
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "efserv.h"
+
+void
+pm_monitor(struct User *usr, char *str)
+{
+ /* MONITOR [+|-]*/
+ int on = 0;
+ if (str && *str == '-')
+  on = -1;
+ if (on == 0)
+ {
+  if (usr->monnode != NULL)
+  {
+   send_msg(":%s NOTICE %s :You are already a monitor.", sn, usr->nick);
+   return;
+  }
+  usr->monnode = add_to_list(&Monitors, usr);
+  send_msg(":%s NOTICE %s :You are now a monitor.", sn, usr->nick);
+ } else
+ {
+  if (usr->monnode == NULL)
+  {
+   send_msg(":%s NOTICE %s :You are not a monitor.", sn, usr->nick);
+   return;
+  }
+  remove_from_list(&Monitors, usr->monnode);
+  usr->monnode = NULL;
+  send_msg(":%s NOTICE %s :You are no longer a monitor.", sn, usr->nick);
+ }
+}
+
+void
+pm_smode(struct User *usr, char *str)
+{
+ /* SMODE #channel modes */
+ char *channel, *modes;
+ if ((channel = strtok(str, " ")) == NULL ||
+     ((modes = strtok(NULL, " ")) == NULL)
+     || *channel != '#')
+ {
+  send_msg(":%s NOTICE %s :Usage: SMODE #channel +/-modes", sn,
+           usr->nick);
+  return;
+ }
+ send_msg(":%s WALLOPS :SMODE on %s set %s by %s!%s@%s[%s]",
+          sn, channel, modes, usr->nick, usr->user, usr->host,
+          usr->server->name);
+ if (*modes == '=')
+ {
+  struct Channel *ch;
+  char smbuff[10], *p = smbuff;
+  if ((ch = find_channel(channel)) == NULL)
+  {
+   send_msg(":%s NOTICE %s :No such channel(No SMODES).", sn, usr->nick);
+  }
+  if (IsBanChan(ch))
+   *p++ = 'b';
+  if (IsOperChan(ch))
+   *p++ = 'o';
+  if (IsAdminChan(ch))
+   *p++ = 'a';
+  *p++ = 0;
+  send_msg(":%s NOTICE %s :SMODE for %s is %s", sn, usr->nick, channel,
+           smbuff);
+  return;
+ }
+ process_smode(channel, modes);
+ write_dynamic_config();
+}
+
+void
+pm_jupe(struct User *usr, char *str)
+{
+ char *svr, *reason;
+ struct Server *ssvr;
+ if (first_server == NULL)
+  return;
+ /* server Reason */
+ if (!(svr = strtok(str, " ")) || !(reason = strtok(NULL, "")))
+ {
+  send_msg(":%s NOTICE %s :Usage: JUPE server reason", sn, usr->nick);
+  return;
+ }
+ if (strchr(svr, '.') == NULL)
+ {
+  send_msg(":%s NOTICE %s :Invalid servername.", sn, usr->nick);
+  return;
+ }
+ if (!strcasecmp(svr, server_name) || !strcasecmp(svr, first_server->name))
+ {
+  send_msg(
+   ":%s NOTICE %s :Cannot jupe services or the server it connects to.",
+   sn, usr->nick);
+  return;
+ }
+ send_msg(":%s WALLOPS :Server %s being juped by %s!%s@%s[%s]: %s",
+          sn, svr, usr->nick, usr->user, usr->host, usr->server->name,
+          reason);
+ if ((ssvr = find_server(svr)))
+  send_msg(":%s SQUIT %s :Juped: %s", sn, svr, reason);
+ else
+ {
+  ssvr = malloc(sizeof(*ssvr));
+  strncpy(ssvr->name, svr, SERVLEN-1)[SERVLEN-1] = 0;
+  ssvr->flags = 0;
+  ssvr->node = add_to_list(&Servers, ssvr);
+  add_to_hash(HASH_SERVER, ssvr->name, ssvr);
+ }
+ send_msg(":%s SERVER %s 2 :Juped: %s", server_name, svr, reason);
+}
+
+void
+pm_help(struct User *usr, char *str)
+{
+ FILE *fhlp;
+ char hlpb[2000];
+ if ((fhlp = fopen("help.txt", "r")) == NULL)
+  return;
+ while (fgets(hlpb, 2000, fhlp))
+ {
+  int i;
+  i = strlen(hlpb);
+  if (i>0 && hlpb[i-1]=='\n')
+   hlpb[i-1] = 0;
+  send_msg(":%s NOTICE %s :%s", sn, usr->nick, hlpb);
+ }
+ fclose(fhlp);
+}
+
+void
+pm_reop(struct User *usr, char *str)
+{
+ char *channel, *nick;
+ int onchan = 0;
+ struct Channel *ch;
+ struct List *node, *nnode;
+ struct User *usr2, *usr3;
+ /* #channel nick */
+ if (str==NULL || (channel = strtok(str, " ")) == NULL || *channel != '#'
+     || (nick = strtok(NULL, " ")) == NULL)
+ {
+  send_msg(":%s NOTICE %s :Usage: REOP #channel nick", sn, usr->nick);
+  return;
+ }
+ if (((ch = find_channel(channel)) == NULL) ||
+     (ch->ops == NULL && ch->nonops == NULL))
+ {
+  send_msg(":%s NOTICE %s :That channel doesn't exist.", sn, usr->nick);
+  return;
+ }
+ if ((usr2 = find_user(nick)) == NULL)
+ {
+  send_msg(":%s NOTICE %s :That user doesn't exist.", sn, usr->nick);
+  return;
+ }
+ if (!IsServAdmin(usr) && ch->ops != NULL)
+ {
+  send_msg(":%s NOTICE %s :That channel already has ops.", sn, usr->nick);
+  return;
+ }
+ FORLIST(node,ch->nonops,struct User*,usr3)
+  if (usr3 == usr2)
+   onchan = 1;
+ FORLIST(node,ch->ops,struct User*,usr3)
+  if (usr3 == usr2)
+   onchan = 2;
+ if (onchan == 0)
+ {
+  send_msg(":%s NOTICE %s :That user is not on the channel.", sn,
+           usr->nick);
+  return;
+ }
+ if (onchan == 2)
+ {
+  send_msg(":%s NOTICE %s :That user is already a chanop.", sn,
+           usr->nick);
+  return;
+ }
+ if (!IsServAdmin(usr))
+  send_msg(":%s WALLOPS :Reop command used on %s by %s!%s@%s[%s]",
+           sn, ch->name, usr->nick, usr->user, usr->host,
+           usr->server->name);
+ /* Now send a mode hack for them... */
+ send_msg(":%s MODE %s +o %s", sn, ch->name, nick);
+ FORLISTDEL(node,nnode,ch->nonops,struct User *, usr3)
+  if (usr3 == usr2)
+   remove_from_list(&ch->nonops, node);
+ add_to_list(&ch->ops, usr2);
+}
+
+void
+pm_admin(struct User *usr, char *str)
+{
+ char *user, *pass;
+ /* ADMIN user passwd */
+ if ((user = strtok(str, " ")) == NULL ||
+     (pass = strtok(NULL, " ")) == NULL)
+ {
+  send_msg(":%s NOTICE %s :Usage: ADMIN adminname passwd", sn, usr->nick);
+  return;
+ }
+ if (verify_admin(user, pass))
+ {
+  usr->flags |= UFLAG_SERVADMIN;
+  send_msg(":%s NOTICE %s :You are now a services operator.", sn,
+           usr->nick);
+ }
+ else
+  send_msg(":%s NOTICE %s :Permission denied.", sn, usr->nick);
+}
+
+void
+pm_niy(struct User *usr, char *str)
+{
+ send_msg(":%s NOTICE %s :Not implemented yet.", sn, usr->nick);
+}
+
+struct
+{
+ char *name;
+ void (*func)(struct User*, char*);
+ int alevel;
+} OpCommands[] =
+{
+ {"JUPE", pm_jupe, ALEVEL_ADMIN},
+ {"HELP", pm_help, ALEVEL_OPER},
+ {"SMODE", pm_smode, ALEVEL_ADMIN},
+ {"REOP", pm_reop, ALEVEL_ADMIN},
+ {"ADMIN", pm_admin, ALEVEL_ADMIN},
+ {"MONITOR", pm_monitor, ALEVEL_OPER},
+ {0, 0}
+};
+
+void
+m_privmsg(char *sender, int parc, char **parv)
+{
+ struct User *usr;
+ char *cmd, *msg;
+ int i;
+ /* :sender PRIVMSG recipient :Message */
+ if (sender == NULL || parc < 2)
+  return;
+ if (parv[1][0] == '#')
+  return;
+ if (!(usr = find_user(sender)))
+  return;
+ if ((cmd = strtok(parv[2], " ")) == NULL)
+  return;
+ if ((msg = strtok(NULL, "")) == NULL)
+  msg = "";
+ for (i=0; OpCommands[i].name; i++)
+  if (!strcasecmp(OpCommands[i].name, cmd))
+  {
+   if ((OpCommands[i].alevel == ALEVEL_ADMIN && !IsAdmin(usr)) ||
+       (OpCommands[i].alevel == ALEVEL_OPER && !IsOper(usr)) ||
+       (OpCommands[i].alevel == ALEVEL_SERVADMIN && !IsServAdmin(usr))
+       )
+   {
+    send_msg(":%s NOTICE %s :Permission denied.", sn, usr->nick);
+    return;
+   }
+   OpCommands[i].func(usr, msg);
+   return;
+  }
+ send_msg(":%s NOTICE %s :No such command.", sn, sender);  
+}

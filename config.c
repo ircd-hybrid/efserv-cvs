@@ -1,6 +1,7 @@
 /*
  *  config.c: The efserv configuration file.
  *  This is part of efserv, a services.int implementation.
+ *  efserv is Copyright(C) 2001 by Andrew Miller, and others.
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -9,11 +10,13 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Library General Public License for more details.
+ *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ *    MA  02111-1307  USA.
+ * $Id: config.c,v 1.4 2001/05/26 01:41:03 a1kmm Exp $
  */
 
 #include "efserv.h"
@@ -24,11 +27,7 @@
 
 char *values[200][2];
 int keyc;
-char *server_name=NULL, *server_pass=NULL, *server_host=NULL;
-/* Interface nick... */
-char *sn = NULL;
-int port;
-struct List *serv_admins=NULL;
+extern struct List *serv_admins;
 
 void
 value_parse(void)
@@ -184,4 +183,18 @@ read_all_config(void)
 {
  read_config_file("efserv.conf");
  read_config_file("dynamic.conf");
+}
+
+void
+do_rehash(void)
+{
+ struct List *node, *nnode;
+ struct ServAdmin *sa;
+ FORLISTDEL(node,nnode,serv_admins,struct ServAdmin*,sa)
+ {
+  free(node);
+  free(sa);
+ }
+ serv_admins = NULL;
+ read_all_config();
 }

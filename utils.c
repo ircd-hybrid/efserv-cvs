@@ -1,6 +1,7 @@
 /*
  *  utils.c: Some general utility functions.
  *  This is part of efserv, a services.int implementation.
+ *  efserv is Copyright(C) 2001 by Andrew Miller, and others.
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -9,11 +10,13 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Library General Public License for more details.
+ *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ *    MA  02111-1307  USA.
+ * $Id: utils.c,v 1.4 2001/05/26 01:41:04 a1kmm Exp $
  */
 
 #include <ctype.h>
@@ -25,7 +28,7 @@
 
 #define HASHSIZE 0x1000
 
-struct HashEntry *hash[0x1000];
+extern struct HashEntry *hash[0x1000];
 
 unsigned long
 hash_text(const char *txt)
@@ -87,6 +90,8 @@ add_to_list(struct List **list, void *data)
 {
  struct List *nlist = malloc(sizeof(*nlist));
  nlist->next = *list;
+ if (nlist->next)
+  nlist->next->prev = nlist;
  nlist->prev = NULL;
  *list = nlist;
  assert(data);
