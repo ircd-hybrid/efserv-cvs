@@ -1,3 +1,16 @@
+wcampbel    2002/04/13 19:02:06 EDT	(20020414_0)
+
+  Modified files:
+    .                    ChangeLog 
+  Log:
+  Do not use <dollar>Id<dollar> in commit messages, it will screw up
+  ChangeLog
+  
+  Revision  Changes    Path
+  1.25      +1 -1      efserv/ChangeLog
+
+
+
 wcampbel    2002/01/02 23:56:03 EST	(20020103_0)
 
   Modified files:
