@@ -12,3 +12,5 @@ dyntrans.tab.c
 dyntrans.ll.c
 .indent.pro
 efserv.log
+dyntrans
+etc
