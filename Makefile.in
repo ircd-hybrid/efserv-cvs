@@ -1,7 +1,7 @@
 # efserv Makefile.in
 # DO NOT EDIT
 #
-# $Id: Makefile.in,v 1.5 2001/11/11 19:36:19 wcampbel Exp $
+# $Id: Makefile.in,v 1.6 2001/11/11 21:26:42 wcampbel Exp $
 #
 
 # Don't edit these unless you know what you are doing
@@ -40,28 +40,28 @@ OBJS=${SRCS:.c=.o}
 
 all: efserv efserv.so help.txt
 
-${BIN} : modules.o Makefile
+${BIN}: modules.o Makefile
 	${CC} -rdynamic ${CFLAGS} ${LDFLAGS} modules.o ${LIBS} -o ${BIN}
 
-modules.o : modules.c
+modules.o: modules.c
 	${CC} -c ${DPATH} ${CFLAGS} modules.c
 
-${MAINSO} : ${OBJS}
+${MAINSO}: ${OBJS}
 	${CC} -shared ${LDFLAGS} ${OBJS} -o ${MAINSO}
 
-sconfig.tab.c sconfig.tab.h : sconfig.y
+sconfig.tab.c sconfig.tab.h: sconfig.y
 	${BISON} --defines sconfig.y
 
-lex.yy.c : sconfig.l sconfig.tab.h
+lex.yy.c: sconfig.l sconfig.tab.h
 	${LEX} sconfig.l
 
-.c.o :
+.c.o:
 	${CC} -c ${DPATH} ${CFLAGS} $<
 
-help.txt : help.txt.in makehelp.pl
+help.txt: help.txt.in makehelp.pl
 	perl makehelp.pl
 
-depend:
+depend: lex.yy.c sconfig.tab.c
 	${CC} ${CFLAGS} -MM ${SRCS} >.depend
 
 clean:
