@@ -1,0 +1,160 @@
+   efserv provides a set of operator services to an IRC network running
+   ircd-hybrid or csircd. Features provided include server juping, clone
+   detection, and "chanfix".
+
+     ----------------------------------------------------------------------
+
+                                  Installation
+
+   efserv uses standard GNU tools to compile and install. The following
+   programs are needed: gcc, flex, bison, a working dl library, and BSD or
+   GNU make.
+
+   1. 
+
+       Run configure with the path that the service will run from.
+
+ $ ./configure --prefix=/path/to/efserv
+
+   2. 
+
+       Edit include/config.h, changing the settings to your network's needs.
+
+   3. 
+
+       Run make.
+
+   4. 
+
+       Run make install.
+
+   5. 
+
+       Copy example.conf to the etc/ in the pathname specified in the
+       --prefix option, with the name efserv.conf.
+
+   6. 
+
+       Edit efserv.conf completely for your network.
+
+   7. 
+
+       Configure all servers specified with a hub {} block in efserv.conf to
+       accept the services pseudoserver linkage. This will involve
+       configuring C:, N:, and H: lines (or their equivalents).
+
+     ----------------------------------------------------------------------
+
+                                     Usage
+
+   Much of efserv works automatically, without oper/admin intervention. The
+   Chanfix aspect of the service is, by default[1], totally automated.
+
+     ----------------------------------------------------------------------
+
+Using Jupe
+
+   In order for an oper to use the JUPE function of efserv, the server the
+   oper is using must be entered in a server {} block in efserv.conf.
+
+   To initiate a jupe, an oper issues a command such as the following:
+
+ /msg SVC-NICK JUPE bad.server.name reason goes here
+
+   XXX - Try to make sense out of the voting code.
+
+     ----------------------------------------------------------------------
+
+Using Cycle
+
+     Note: USE_CYCLE must be defined in include/config.h for this command to
+     be able to be used.
+
+   The CYCLE allows any chanop in a channel to have efserv forcibly close a
+   channel and allow it to be reopened.
+
+   XXX - Provide more information here
+
+     ----------------------------------------------------------------------
+
+Using Reop
+
+     Note: USE_REOP must be defined in include/config.h for this command to
+     be able to be used.
+
+   REOP allows an operator to issue a manual chanfix to a channel, opping the
+   users who have the highest score according to the internal databases.
+
+     ----------------------------------------------------------------------
+
+Using Monitor
+
+   MONITOR allows an operator to enable or disable Monitor mode, which allows
+   an operator to receive alerts on network-wide cloning. The format of the
+   notice is similar to what is given on EFnet services.us. The behavior of
+   efserv is proactive in notifying opers, rather than waiting for a CLONES
+   command.
+
+   MONITOR accepts a single parameter, either + or -. + or no parameter
+   enables monitor mode, and - disables monitor mode.
+
+   XXX - There should still be a CLONES command, for when a monitor bot first
+   connects, and to maintain compatibility with current monitor bots.
+
+     ----------------------------------------------------------------------
+
+Using SMode
+
+   SMODE allows an operator to designate a channel banned from the network,
+   oper only, or services administrator only.
+
+   XXX - Should this be administrator only?
+
+   XXX - This does not yet function completely. Channel smodes are not yet
+   saved between restarts.
+
+     ----------------------------------------------------------------------
+
+Using Admin
+
+   Services administraor access is controlled by the ADMIN. The syntax is as
+   follows:
+
+ /msg SVC-NICK ADMIN nick password
+
+   Access to log in as a services administrator is strictly controlled. You
+   must be entered in efserv.conf in an admin {} block. The user@host you
+   currently have must match one of the entries in your admin {} block, and
+   you must currently be an IRC operator.
+
+   Administrator access allows you to have more "power" over JUPE and allows
+   the administrator access to the SUNJUPE command.
+
+     ----------------------------------------------------------------------
+
+Using Sunjupe
+
+   The SUNJUPE allows a services administrator to completely unjupe a server,
+   bypassing all voting. The command accepts one parameter, the server name
+   to unjupe.
+
+     ----------------------------------------------------------------------
+
+                                 Running efserv
+
+   When properly installed, efserv is simple to start. Change into the
+   directory where the service was installed, and issue the following
+   command:
+
+ $ ./efserv >out.log 2>err.log &
+
+   The service should start and connect to one of the servers specified in a
+   hub {} block in etc/efserv.conf.
+
+     Note: The service will send text to STDOUT and STDERR. For this reason,
+     the redirections above are needed.
+
+  Notes
+
+   [1] Manual Chanfix is controlled by the USE_REOP define in                 
+       include/config.h.                                                      
