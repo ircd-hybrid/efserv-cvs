@@ -51,6 +51,10 @@ depend:
 clean:
 	${RM} -f *.o *.so core efserv.core efserv
 
+distclean: clean
+	${RM} -f Makefile config.status config.cache config.log help.txt
+	${RM} -f lex.yy.c sconfig.tab.*
+
 install:
 	${MKDIR} -p ${prefix} ${prefix}/etc
 	${CP} ${BIN} ${IPATH}
