@@ -1,3 +1,9 @@
+*** 20011119_3 by wcampbel
+Added the README I generated
+Apparently, CVSROOT/loginfo caught the docs/efserv, so I removed those
+  entries from this ChangeLog and repo-moved docs/efserv to docs/EFserv.
+
+
 *** 20011112_1 by wcampbel
 Cleaned up and documented example.conf
 
