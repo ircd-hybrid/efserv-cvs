@@ -5,4 +5,10 @@ efserv
 Makefile
 sconfig.tab.*
 lex.yy.c
-help.txt
+dtheader.i
+dyntrans.setup.c
+dyntrans.tab.h
+dyntrans.tab.c
+dyntrans.ll.c
+.indent.pro
+efserv.log
