@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: config.h,v 1.2 2001/11/12 00:43:12 wcampbel Exp $
+ * $Id: config.h,v 1.3 2001/11/12 04:11:56 wcampbel Exp $
  */
 
 #ifndef CONFIG_H
@@ -44,6 +44,12 @@
  */
 
 #undef USE_SMODE
+
+/* USE_REOP - Enable the REOP command, allow a channel to be manually
+ * "chanfix'ed"
+ */
+
+#undef USE_REOP
 
 /* These should be set to the maximum permitted by any irc
  * server on the network
