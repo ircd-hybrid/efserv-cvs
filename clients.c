@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.13 2001/12/02 03:59:37 a1kmm Exp $
+ * $Id: clients.c,v 1.14 2001/12/03 02:45:50 wcampbel Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +27,7 @@
 #include "struct.h"
 #include "utils.h"
 #include "funcs.h"
+#include "serno.h"
 
 void cleanup_hosts(void);
 void m_chmode(char *sender, int parc, char **parv);
@@ -434,8 +435,8 @@ m_version(char *sender, int parc, char **parv)
   return;
  }
  if (IsOper(usr))
-  send_msg(":%s 351 %s efserv %s :%s", server_name, usr->nick, server_name,
-           VERSION);
+  send_msg(":%s 351 %s efserv %s :%s(%s)", server_name, usr->nick, server_name,
+           VERSION, SERIALNUM);
  else
   send_msg(":%s 351 %s efserv %s :.", server_name, usr->nick, server_name);
 }
