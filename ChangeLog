@@ -1,3 +1,7 @@
+*** 20011121_2 by wcampbel
+efserv now sends proper numerics to server/client queries.
+
+
 *** 20011121_1 by wcampbel
 Update of the README file
 
