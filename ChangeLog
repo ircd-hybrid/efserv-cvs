@@ -76,7 +76,7 @@ a1kmm       2001/12/10 02:22:37 EST	(20011210_1)
   Log:
   - Added some forgotten files.
   - Updated cvsignore.
-  - Added $Id: ChangeLog,v 1.24 2002/01/03 04:56:03 wcampbel Exp $ to help.txt/help.txt.in so they will commit.
+  - Added Id to help.txt/help.txt.in so they will commit.
   
   Revision  Changes    Path
   1.2       +7 -1      efserv/.cvsignore
