@@ -1,0 +1,8 @@
+config.log
+config.cache
+config.status
+efserv
+Makefile
+sconfig.tab.*
+lex.yy.c
+help.txt

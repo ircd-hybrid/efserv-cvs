@@ -1,3 +1,10 @@
+# efserv Makefile.in
+# DO NOT EDIT
+#
+# $Id: Makefile.in,v 1.5 2001/11/11 19:36:19 wcampbel Exp $
+#
+
+# Don't edit these unless you know what you are doing
 CC=@CC@
 CP=@CP@
 RM=@RM@
@@ -10,6 +17,9 @@ MAINSO=efserv.so
 prefix=@prefix@
 DPATH=-DPREFIX=\"@exec_prefix@/\"
 IPATH=@exec_prefix@
+LIBS=@LIBS@
+
+# Source files
 SRCS=channels.c\
      commands.c\
      config.c\
@@ -24,24 +34,30 @@ SRCS=channels.c\
      utils.c \
      sconfig.tab.c \
      lex.yy.c
+
+# BSD _AND_ GNU Compliant OBJS definition
 OBJS=${SRCS:.c=.o}
-LIBS=@LIBS@
 
 all: efserv efserv.so help.txt
+
 ${BIN} : modules.o Makefile
 	${CC} -rdynamic ${CFLAGS} ${LDFLAGS} modules.o ${LIBS} -o ${BIN}
+
 modules.o : modules.c
 	${CC} -c ${DPATH} ${CFLAGS} modules.c
+
 ${MAINSO} : ${OBJS}
 	${CC} -shared ${LDFLAGS} ${OBJS} -o ${MAINSO}
 
 sconfig.tab.c sconfig.tab.h : sconfig.y
 	${BISON} --defines sconfig.y
+
 lex.yy.c : sconfig.l sconfig.tab.h
 	${LEX} sconfig.l
 
 .c.o :
 	${CC} -c ${DPATH} ${CFLAGS} $<
+
 help.txt : help.txt.in makehelp.pl
 	perl makehelp.pl
 
@@ -49,16 +65,17 @@ depend:
 	${CC} ${CFLAGS} -MM ${SRCS} >.depend
 
 clean:
-	${RM} -f *.o *.so core efserv.core efserv
+	${RM} -f *.o *.so core efserv.core efserv lex.yy.c
+	${RM} -f sconfig.tab.* help.txt
 
 distclean: clean
-	${RM} -f Makefile config.status config.cache config.log help.txt
-	${RM} -f lex.yy.c sconfig.tab.*
+	${RM} -f Makefile config.status config.cache config.log
 
 install:
 	${MKDIR} -p ${prefix} ${prefix}/etc
 	${CP} ${BIN} ${IPATH}
 	${CP} ${MAINSO} ${IPATH}
+	${CP} help.txt ${IPATH}
 	@echo \-----------------------------------------
 	@echo efserv can now be run as ${prefix}/${BIN}.
 	@echo If you have not yet done so, please copy
