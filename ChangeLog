@@ -1,3 +1,9 @@
+*** 20011202_1 by a1kmm
+- Added a check so that if the channel is cycled and no-one on the top 5
+  list is opped, they are all deopped, +lki modes are removed, and all bans
+  are unset.
+
+
 *** 20011201_2 by a1kmm
 - Give abusers 1 warning per user@host/host throughout the host session
   not to introduce clones/nickflood before they are reported to the
