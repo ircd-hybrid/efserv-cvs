@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: channels.c,v 1.13 2001/12/02 06:59:04 a1kmm Exp $
+ * $Id: channels.c,v 1.14 2001/12/10 07:04:45 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -77,6 +77,7 @@ check_channel_status(struct Channel *ch)
 
   if (server_count < minimum_servers)
     return;
+  BestOps = NULL;
   if ((timenow - ch->ts) > CHAN_RECOVER_TIME)
     ch->first_ts = ch->ts;
   else if (ch->ops != NULL && ch->ts > ch->first_ts && ch->exops != NULL)
@@ -132,6 +133,7 @@ check_channel_status(struct Channel *ch)
   {
     if (ch->exops == NULL)
       return;
+    BestOps = NULL;
     FORLIST(node, ch->exops, struct ChanopUser *, cou)
     {
       i = 0;
@@ -205,6 +207,52 @@ check_channel_status(struct Channel *ch)
       cou->last_opped = timenow;
       cou->slices = 1;
       add_to_list(&ch->exops, cou);
+    }
+  }
+  if (ch->ops != NULL && ch->exops != NULL)
+  {
+    int unopped_exops=0, opped_exops=0;
+    char *md5;
+    BestOps = NULL;
+    FORLIST(node, ch->exops, struct ChanopUser *, cou)
+    {
+      i = 0;
+      FORLIST(node2, BestOps, struct ChanopUser *, cou2)
+        if (++i > 5 || cou2->slices <= cou->slices)
+          break;
+      if (i > 5 || (node2 == NULL && count >= 5))
+        continue;
+      add_to_list_before(&BestOps, node2, cou);
+      count++;
+    }
+    if (count > 5)
+      count = 5;
+    FORLIST(node, ch->ops, struct User*, usr)
+    {
+      i = 0;
+      if (usr->host)
+        md5 = getmd5(usr);
+      FORLIST(node2, BestOps, struct ChanopUser *, cou)
+        if (i++ < 5 && !memcmp(md5, cou->uhost_md5, 16))
+          opped_exops++;
+    }
+    FORLIST(node, ch->nonops, struct User*, usr)
+    {
+      if (usr->host)
+        md5 = getmd5(usr);
+      i = 0;
+      FORLIST(node2, BestOps, struct ChanopUser *, cou)
+      {
+        if (i++ < 5 && !memcmp(md5, cou->uhost_md5, 16))
+          unopped_exops++;
+      }
+    }
+    FORLISTDEL(node, nnode, BestOps, struct ChanopUser *, cou)
+      free(node);
+    if (unopped_exops > 3)
+    {
+      clearops_channel(ch);
+      check_channel_status(ch);
     }
   }
   /* Now we simply have to go through and delete the expired
@@ -460,6 +508,15 @@ m_part(char *sender, int parc, char **parv)
 }
 
 void
+m_kick(char *sender, int parc, char **parv)
+{
+  /* :sender KICK #channel user :reason */
+  if (parc < 3)
+    return;
+  m_part(parv[2], parc, parv);
+}
+
+void
 m_join(char *sender, int parc, char **parv)
 {
   /* :sender JOIN 0 */
@@ -594,12 +651,10 @@ m_chmode(char *sender, int parc, char **parv)
               break;
             }
         }
-        hack++;
         break;
       case 'e':
       case 'I':
         arg++;
-        hack++;
     }
 #ifdef USE_AUTOJUPE
   if (hack == 0)

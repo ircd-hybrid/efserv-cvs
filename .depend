@@ -5,9 +5,11 @@ commands.o: commands.c include/config.h include/define.h \
 config.o: config.c include/config.h include/define.h include/struct.h \
  include/utils.h include/funcs.h
 clients.o: clients.c include/config.h include/define.h \
- include/struct.h include/utils.h include/funcs.h
+ include/struct.h include/utils.h include/funcs.h include/serno.h
 clones.o: clones.c include/config.h include/define.h include/struct.h \
  include/utils.h include/funcs.h
+dyntfuncs.o: dyntfuncs.c include/define.h include/config.h \
+ include/struct.h include/dyntrans.h include/utils.h
 database.o: database.c include/config.h include/define.h \
  include/struct.h include/utils.h include/funcs.h
 efserv.o: efserv.c include/config.h include/define.h include/struct.h \
@@ -21,3 +23,7 @@ utils.o: utils.c include/config.h include/define.h include/utils.h
 sconfig.tab.o: sconfig.tab.c include/config.h include/define.h \
  include/struct.h include/utils.h include/funcs.h include/conf.h
 lex.yy.o: lex.yy.c include/conf.h sconfig.tab.h
+dyntrans.setup.o: dyntrans.setup.c include/define.h include/dyntrans.h \
+ include/config.h include/utils.h include/struct.h include/funcs.h
+dyntrans.tab.o: dyntrans.tab.c include/conf.h include/config.h \
+ include/dyntrans.h include/utils.h

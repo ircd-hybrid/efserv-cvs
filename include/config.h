@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: config.h,v 1.3 2001/11/12 04:11:56 wcampbel Exp $
+ * $Id: config.h,v 1.4 2001/12/10 07:04:50 a1kmm Exp $
  */
 
 #ifndef CONFIG_H
@@ -60,5 +60,7 @@
 #define USERLEN 40
 #define SERVLEN 80
 #define CHANLEN 255
+
+#define HASHSIZE 0x1000
 
 #endif

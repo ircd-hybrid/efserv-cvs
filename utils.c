@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: utils.c,v 1.8 2001/11/11 22:13:52 wcampbel Exp $
+ * $Id: utils.c,v 1.9 2001/12/10 07:04:46 a1kmm Exp $
  */
 
 #include <ctype.h>
@@ -27,9 +27,7 @@
 #include "define.h"
 #include "utils.h"
 
-#define HASHSIZE 0x1000
-
-extern struct HashEntry *hash[0x1000];
+extern struct HashEntry *hash[HASHSIZE];
 
 unsigned long
 hash_text(const char *txt)

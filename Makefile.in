@@ -1,7 +1,7 @@
 # efserv Makefile.in
 # DO NOT EDIT
 #
-# $Id: Makefile.in,v 1.9 2001/12/03 02:25:50 wcampbel Exp $
+# $Id: Makefile.in,v 1.10 2001/12/10 07:04:45 a1kmm Exp $
 #
 
 # Don't edit these unless you know what you are doing
@@ -12,6 +12,8 @@ MKDIR=@MKDIR@
 CFLAGS=-Wall -ggdb -Iinclude/
 BIN=efserv
 LEX=@LEX@
+MV=mv
+CPPC=gcc -E -C
 BISON=@BISON@
 MAINSO=efserv.so
 prefix=@prefix@
@@ -25,6 +27,7 @@ SRCS=channels.c\
      config.c\
      clients.c\
      clones.c\
+     dyntfuncs.c\
      database.c\
      efserv.c\
      log.c\
@@ -33,7 +36,8 @@ SRCS=channels.c\
      msg.c\
      utils.c \
      sconfig.tab.c \
-     lex.yy.c
+     lex.yy.c \
+     dyntrans.setup.c
 
 # BSD _AND_ GNU Compliant OBJS definition
 OBJS=${SRCS:.c=.o}
@@ -55,14 +59,32 @@ sconfig.tab.c sconfig.tab.h: sconfig.y
 lex.yy.c: sconfig.l sconfig.tab.h
 	${LEX} sconfig.l
 
+dyntrans.setup.c: dyntrans dtheader.i
+	dyntrans <dtheader.i >dyntrans.setup.c
+
+dyntrans: dyntrans.ll.o dtransgen.o dyntrans.tab.o
+	${CC} ${CFLAGS} dyntrans.ll.o dtransgen.o dyntrans.tab.o -lfl -o dyntrans
+
+dyntrans.ll.c: dyntrans.l dyntrans.tab.h
+	${LEX} dyntrans.l
+	${MV} lex.yy.c dyntrans.ll.c
+
+dyntrans.tab.c dyntrans.tab.h: dyntrans.y
+	${BISON} --defines dyntrans.y
+
+dtheader.i: dtheader.h
+	${CPPC} dtheader.h > dtheader.i
+
+dtheader.h: include/config.h include/define.h include/struct.h
+
 .c.o:
 	${CC} -c ${DPATH} ${CFLAGS} $<
 
 help.txt: help.txt.in makehelp.pl
 	perl makehelp.pl
 
-depend: lex.yy.c sconfig.tab.c
-	${CC} ${CFLAGS} -MM ${SRCS} >.depend
+depend: lex.yy.c sconfig.tab.c dyntrans.tab.c
+	${CC} ${CFLAGS} -MM ${SRCS} dyntrans.tab.c >.depend
 
 clean:
 	${RM} -f *.o *.so core efserv.core efserv lex.yy.c

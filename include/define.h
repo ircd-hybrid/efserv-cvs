@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.10 2001/12/02 06:59:06 a1kmm Exp $
+ * $Id: define.h,v 1.11 2001/12/10 07:04:50 a1kmm Exp $
  */
 
 /* The maximum number of clients per user@host */
@@ -39,7 +39,7 @@
 
 #define JUPE_EXPIRE_TIME 45 *60
 #define MINIMUM_OPS  0 /* 4 */
-#define EXOP_EXPIRE_TIME 2*60 /* *60 */
+#define EXOP_EXPIRE_TIME 2*60 *60
 #define CHAN_SLICE_LENGTH 5
 #define CYCLE_REJOIN_TIME 30
 #define CHAN_RECOVER_TIME 10*60

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: msg.c,v 1.11 2001/11/12 00:43:12 wcampbel Exp $
+ * $Id: msg.c,v 1.12 2001/12/10 07:04:46 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -600,16 +600,16 @@ m_privmsg(char *sender, int parc, char **parv)
  for (i=0; OpCommands[i].name; i++)
   if (!strcasecmp(OpCommands[i].name, cmd))
   {
-   if ((OpCommands[i].alevel == ALEVEL_ADMIN && !IsAdmin(usr)) ||
-       (OpCommands[i].alevel == ALEVEL_OPER && !IsOper(usr)) ||
-       (OpCommands[i].alevel == ALEVEL_SERVADMIN && !IsServAdmin(usr))
-       )
-   {
-    send_msg(":%s NOTICE %s :Permission denied.", sn, usr->nick);
-    return;
-   }
-   OpCommands[i].func(usr, msg);
-   return;
+    if ((OpCommands[i].alevel == ALEVEL_ADMIN && !IsAdmin(usr)) ||
+         (OpCommands[i].alevel == ALEVEL_OPER && !IsOper(usr)) ||
+         (OpCommands[i].alevel == ALEVEL_SERVADMIN && !IsServAdmin(usr))
+        )
+     {
+       send_msg(":%s NOTICE %s :Permission denied.", sn, usr->nick);
+       return;
+     }
+     OpCommands[i].func(usr, msg);
+     return;
   }
- send_msg(":%s NOTICE %s :No such command.", sn, sender);  
+  send_msg(":%s NOTICE %s :No such command.", sn, sender);  
 }

@@ -16,21 +16,25 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: struct.h,v 1.6 2001/12/02 06:59:06 a1kmm Exp $
+ * $Id: struct.h,v 1.7 2001/12/10 07:04:50 a1kmm Exp $
  */
 #include "define.h"
 
+/*  We don't need to translate this, as we reinstall the commands on reload. */
+/*PNOTRANS*/
 struct Command
 {
  char *name;
  void (*func)(char *sender, int argc, char **parv);
 };
+/*PYESTRANS*/
 
 struct User
 {
  struct Server *server;
  char nick[NICKLEN], user[USERLEN], host[HOSTLEN];
  unsigned long flags, caps;
+ time_t last_op_subtract;
  struct ServAdmin *sa;
  struct List *node, *monnode;
 };
