@@ -1,3 +1,17 @@
+wcampbel    2002/04/15 16:25:24 EDT	(20020415_1)
+
+  Modified files:
+    .                    clients.c modules.c 
+  Log:
+  Ignore SIGTRAP for the FreeBSD/gdb detach "issue"
+  Correctly handle server-server pings
+  
+  Revision  Changes    Path
+  1.16      +4 -1      efserv/clients.c
+  1.10      +2 -0      efserv/modules.c
+
+
+
 wcampbel    2002/04/15 13:44:37 EDT	(20020415_0)
 
   Modified files:
