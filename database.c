@@ -16,12 +16,13 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: database.c,v 1.3 2001/07/30 06:51:04 a1kmm Exp $
+ * $Id: database.c,v 1.4 2001/11/11 22:13:52 wcampbel Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include "config.h"
 #include "define.h"
 #include "struct.h"
 #include "utils.h"

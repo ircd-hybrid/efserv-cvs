@@ -1,23 +1,23 @@
-channels.o: channels.c includes/define.h includes/struct.h \
- includes/utils.h includes/funcs.h
-commands.o: commands.c includes/define.h includes/struct.h \
- includes/utils.h
-config.o: config.c includes/define.h includes/struct.h \
- includes/utils.h includes/funcs.h
-clients.o: clients.c includes/define.h includes/struct.h \
- includes/utils.h includes/funcs.h
-clones.o: clones.c includes/define.h includes/struct.h \
- includes/utils.h includes/funcs.h
-database.o: database.c includes/define.h includes/struct.h \
- includes/utils.h includes/funcs.h
-efserv.o: efserv.c includes/define.h includes/struct.h \
- includes/utils.h includes/funcs.h
-log.o: log.c includes/define.h includes/struct.h
+channels.o: channels.c includes/config.h includes/define.h \
+ includes/struct.h includes/utils.h includes/funcs.h
+commands.o: commands.c includes/config.h includes/define.h \
+ includes/struct.h includes/utils.h
+config.o: config.c includes/config.h includes/define.h \
+ includes/struct.h includes/utils.h includes/funcs.h
+clients.o: clients.c includes/config.h includes/define.h \
+ includes/struct.h includes/utils.h includes/funcs.h
+clones.o: clones.c includes/config.h includes/define.h \
+ includes/struct.h includes/utils.h includes/funcs.h
+database.o: database.c includes/config.h includes/define.h \
+ includes/struct.h includes/utils.h includes/funcs.h
+efserv.o: efserv.c includes/config.h includes/define.h \
+ includes/struct.h includes/utils.h includes/funcs.h
+log.o: log.c includes/config.h includes/define.h includes/struct.h
 match.o: match.c
-md5.o: md5.c includes/define.h includes/struct.h
-msg.o: msg.c includes/define.h includes/struct.h includes/utils.h \
- includes/funcs.h includes/conf.h
-utils.o: utils.c includes/define.h includes/utils.h
-sconfig.tab.o: sconfig.tab.c includes/define.h includes/struct.h \
+md5.o: md5.c includes/config.h includes/define.h includes/struct.h
+msg.o: msg.c includes/config.h includes/define.h includes/struct.h \
  includes/utils.h includes/funcs.h includes/conf.h
+utils.o: utils.c includes/config.h includes/define.h includes/utils.h
+sconfig.tab.o: sconfig.tab.c includes/config.h includes/define.h \
+ includes/struct.h includes/utils.h includes/funcs.h includes/conf.h
 lex.yy.o: lex.yy.c includes/conf.h sconfig.tab.h

@@ -16,10 +16,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: md5.c,v 1.2 2001/05/31 08:52:05 a1kmm Exp $
+ * $Id: md5.c,v 1.3 2001/11/11 22:13:52 wcampbel Exp $
  */
 #include <string.h>
 #include <time.h>
+#include "config.h"
 #include "define.h"
 #include "struct.h"
 

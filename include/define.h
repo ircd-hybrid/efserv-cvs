@@ -16,18 +16,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.6 2001/07/30 06:51:06 a1kmm Exp $
+ * $Id: define.h,v 1.7 2001/11/11 22:13:52 wcampbel Exp $
  */
-
-
-#define NICKLEN 20
-#define HOSTLEN 64
-#define USERLEN 40
-#define SERVLEN 80
-#define CHANLEN 255
-
-#define USE_AUTOJUPE
-#define USE_CYCLE
 
 #define MAXCLONES_UHOST 4
 #define MAXCLONES_HOST 6

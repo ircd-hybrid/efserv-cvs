@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: efserv.c,v 1.10 2001/11/05 04:27:40 wcampbel Exp $
+ * $Id: efserv.c,v 1.11 2001/11/11 22:13:52 wcampbel Exp $
  */
 
 #include <stdarg.h>
@@ -32,6 +32,7 @@
 #include <sys/errno.h>
 #include <string.h>
 #include <time.h>
+#include "config.h"
 #include "define.h"
 #include "struct.h"
 #include "utils.h"

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: commands.c,v 1.9 2001/11/05 04:27:40 wcampbel Exp $
+ * $Id: commands.c,v 1.10 2001/11/11 22:13:52 wcampbel Exp $
  */
 
 #include <stdio.h>
@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
+#include "config.h"
 #include "define.h"
 #include "struct.h"
 #include "utils.h"
