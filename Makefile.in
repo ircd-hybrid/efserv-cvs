@@ -1,12 +1,12 @@
 # efserv Makefile.in
 # DO NOT EDIT
 #
-# $Id: Makefile.in,v 1.8 2001/12/03 02:08:57 wcampbel Exp $
+# $Id: Makefile.in,v 1.9 2001/12/03 02:25:50 wcampbel Exp $
 #
 
 # Don't edit these unless you know what you are doing
 CC=@CC@
-CP=@CP@
+INSTALL=@INSTALL@
 RM=@RM@
 MKDIR=@MKDIR@
 CFLAGS=-Wall -ggdb -Iinclude/
@@ -73,10 +73,10 @@ distclean: clean
 
 install:
 	${MKDIR} -p ${prefix} ${prefix}/etc
-	${CP} ${BIN} ${IPATH}
-	${CP} ${MAINSO} ${IPATH}
-	${CP} help.txt ${IPATH}
-	${CP} abuse.warn ${IPATH}
+	${INSTALL} ${BIN} ${IPATH}
+	${INSTALL} ${MAINSO} ${IPATH}
+	${INSTALL} help.txt ${IPATH}
+	${INSTALL} abuse.warn ${IPATH}
 	@echo \-----------------------------------------
 	@echo efserv can now be run as ${prefix}/${BIN}.
 	@echo If you have not yet done so, please copy
