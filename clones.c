@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clones.c,v 1.5 2001/11/05 04:27:40 wcampbel Exp $
+ * $Id: clones.c,v 1.6 2001/11/11 21:54:31 db Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -29,105 +29,118 @@
 void
 cleanup_hosts(void)
 {
- struct List *node, *nnode;
- struct Host *h;
- FORLISTDEL(node,nnode,Hosts,struct Host*,h)
- {
-  h->last_recalc -= (timenow-h->last_recalc)/10*10;
-  h->rate -= (timenow-h->last_recalc)/10;
-  if (h->rate < 0)
-   h->rate = 0;
-  if (h->count == 0 && h->rate == 0)
+  struct List *node, *nnode;
+  struct Host *h;
+  FORLISTDEL(node,nnode,Hosts,struct Host*,h)
   {
-   remove_from_hash(HASH_HOST, h->host);
-   remove_from_list(&Hosts, node);
-   free(h);
+    h->last_recalc -= (timenow-h->last_recalc)/10*10;
+    h->rate -= (timenow-h->last_recalc)/10;
+    if (h->rate < 0)
+      h->rate = 0;
+    if (h->count == 0 && h->rate == 0)
+    {
+      remove_from_hash(HASH_HOST, h->host);
+      remove_from_list(&Hosts, node);
+      free(h);
+    }
   }
- }
 }
 
 void
 report_cloner(struct Host *h, char *term)
 {
- struct List *node;
- struct User *usr;
- if ((timenow - h->last_report) < 30)
-  return;
- h->last_report = timenow;
- FORLIST(node,Monitors,struct User*,usr)
+  struct List *node;
+  struct User *usr;
+
+  if ((timenow - h->last_report) < 30)
+    return;
+
+  h->last_report = timenow;
+  FORLIST(node,Monitors,struct User*,usr)
+
   if (h->full)
-   send_msg(":%s NOTICE %s :%s ON %s", server_name, usr->nick,
-            term, h->host);
+    send_msg(":%s NOTICE %s :%s ON %s", server_name, usr->nick,
+	     term, h->host);
   else
-   send_msg(":%s NOTICE %s :%s ON *@%s", server_name, usr->nick,
-            term, h->host);
+    send_msg(":%s NOTICE %s :%s ON *@%s", server_name, usr->nick,
+	     term, h->host);
 }
 
 void
 add_cloner(char *user, char *host)
 {
- struct Host *h1, *h2;
- char uah[HOSTLEN+USERLEN+1];
- strncpy(uah, user, USERLEN-1)[USERLEN-1] = 0;
- strcat(uah, "@");
- strncat(uah, host, HOSTLEN-1);
- if ((h1 = find_host(uah)) == NULL)
- {
-  h1 = malloc(sizeof(*h1));
-  strncpy(h1->host, uah, HOSTLEN+USERLEN)[HOSTLEN+USERLEN] = 0;
-  h1->count = h1->rate = 0;
-  h1->full = 1;
-  h1->last_recalc = timenow;
-  h1->last_report = 0;
-  add_to_hash(HASH_HOST, h1->host, h1);
-  add_to_list(&Hosts, h1);
- }
- if ((h2 = find_host(host)) == NULL)
- {
-  h2 = malloc(sizeof(*h2));
-  strncpy(h2->host, host, HOSTLEN-1)[HOSTLEN-1] = 0;
-  h2->count = h2->rate = h2->full = 0;
-  h2->last_recalc = timenow;
-  h2->last_report = 0;
-  add_to_hash(HASH_HOST, h2->host, h2);
-  add_to_list(&Hosts, h2);
- }
- h1->count++;
- h1->rate++;
- h2->count++;
- h2->rate++;
- if (h2->count > MAXCLONES_HOST)
- {
-  report_cloner(h2, "CLONES");
-  return;
- }
- if (h1->count > MAXCLONES_UHOST)
- {
-  report_cloner(h1, "CLONES");
-  return;
- }
- if (h2->rate > MAXCLONES_HOST)
- {
-  report_cloner(h2, "NICKFLOODER");
-  return;
- }
- if (h1->rate > MAXCLONES_UHOST)
- {
-  report_cloner(h1, "NICKFLOODER");
-  return;
- }
+  struct Host *h1, *h2;
+  char uah[HOSTLEN+USERLEN+1];
+
+  strncpy(uah, user, USERLEN-1)
+    [USERLEN-1] = '\0';
+
+  strcat(uah, "@");
+  strncat(uah, host, HOSTLEN-1);
+
+  if ((h1 = find_host(uah)) == NULL)
+  {
+    h1 = malloc(sizeof(*h1));
+    strncpy(h1->host, uah, HOSTLEN+USERLEN)
+      [HOSTLEN+USERLEN] = '\0';
+
+    h1->count = h1->rate = 0;
+    h1->full = 1;
+    h1->last_recalc = timenow;
+    h1->last_report = 0;
+    add_to_hash(HASH_HOST, h1->host, h1);
+    add_to_list(&Hosts, h1);
+  }
+
+  if ((h2 = find_host(host)) == NULL)
+  {
+    h2 = malloc(sizeof(*h2));
+    strncpy(h2->host, host, HOSTLEN-1)
+      [HOSTLEN-1] = '\0';
+    h2->count = h2->rate = h2->full = 0;
+    h2->last_recalc = timenow;
+    h2->last_report = 0;
+    add_to_hash(HASH_HOST, h2->host, h2);
+    add_to_list(&Hosts, h2);
+  }
+  h1->count++;
+  h1->rate++;
+  h2->count++;
+  h2->rate++;
+  if (h2->count > MAXCLONES_HOST)
+  {
+    report_cloner(h2, "CLONES");
+    return;
+  }
+  if (h1->count > MAXCLONES_UHOST)
+  {
+    report_cloner(h1, "CLONES");
+    return;
+  }
+  if (h2->rate > MAXCLONES_HOST)
+  {
+    report_cloner(h2, "NICKFLOODER");
+    return;
+  }
+  if (h1->rate > MAXCLONES_UHOST)
+  {
+    report_cloner(h1, "NICKFLOODER");
+    return;
+  }
 }
 
 void
 remove_cloner(char *user, char *host)
 {
- struct Host *h1, *h2;
- char uah[HOSTLEN+USERLEN+1];
- strncpy(uah, user, USERLEN-1)[USERLEN-1] = 0;
- strcat(uah, "@");
- strncat(uah, host, HOSTLEN-1);
- if ((h1 = find_host(uah)) == NULL || (h2 = find_host(host)) == NULL)
-  return;
- h1->count--;
- h2->count--;
+  struct Host *h1, *h2;
+  char uah[HOSTLEN+USERLEN+1];
+
+  strncpy(uah, user, USERLEN-1)
+    [USERLEN-1] = '\0';
+  strcat(uah, "@");
+  strncat(uah, host, HOSTLEN-1);
+  if ((h1 = find_host(uah)) == NULL || (h2 = find_host(host)) == NULL)
+    return;
+  h1->count--;
+  h2->count--;
 }
