@@ -1,0 +1,39 @@
+dnl $Id: configure.in,v 1.1 2001/06/01 08:52:12 a1kmm Exp $
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(efserv.c)
+AC_PREFIX_DEFAULT(/usr/local/efserv)
+
+AC_DEFINE_UNQUOTED(EFSERV_PREFIX, %exec_prefix)
+
+PACKAGE=efserv
+VERSION=1.0
+AC_SUBST(PACKAGE)
+AC_SUBST(VERSION)
+AC_ISC_POSIX
+AC_PATH_PROG(RM, rm)
+AC_PATH_PROG(CP, cp)
+AC_PATH_PROG(MKDIR, mkdir)
+
+dnl Checks for programs.
+AC_PROG_YACC
+AC_PROG_CC
+AC_PROG_LEX
+
+dnl Checks for libraries.
+dnl Replace `main' with a function in -ldl:
+AC_CHECK_LIB(dl, dlopen)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(fcntl.h malloc.h strings.h unistd.h strings.h string.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+
+dnl Checks for library functions.
+AC_FUNC_MEMCMP
+AC_TYPE_SIGNAL
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS(socket strdup strerror strtoul)
+
+AC_OUTPUT(Makefile)

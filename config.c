@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: config.c,v 1.8 2001/05/31 08:52:04 a1kmm Exp $
+ * $Id: config.c,v 1.9 2001/06/01 08:52:11 a1kmm Exp $
  */
 
 #include <stdio.h>
@@ -113,7 +113,7 @@ read_config_file(const char *file)
 void
 read_all_config(void)
 {
- read_config_file("efserv.conf");
+ read_config_file(ETCPATH "efserv.conf");
  check_complete();
 }
 

@@ -1,16 +1,15 @@
-# Generated automatically from Makefile.in by configure.
-CC=gcc
-CP=/bin/cp
-RM=/bin/rm
-MKDIR=/bin/mkdir
+CC=@CC@
+CP=@CP@
+RM=@RM@
+MKDIR=@MKDIR@
 CFLAGS=-Wall -ggdb -Iincludes/
 BIN=efserv
-LEX=flex
+LEX=@LEX@
 BISON=@BISON@
 MAINSO=efserv.so
-prefix=/home/andrew/src/efs2
-DPATH=-DPREFIX=\"${prefix}/\"
-IPATH=${prefix}
+prefix=@prefix@
+DPATH=-DPREFIX=\"@exec_prefix@/\"
+IPATH=@exec_prefix@
 SRCS=channels.c\
      commands.c\
      config.c\

@@ -16,10 +16,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: modules.c,v 1.4 2001/05/31 07:52:11 a1kmm Exp $
+ * $Id: modules.c,v 1.5 2001/06/01 08:52:12 a1kmm Exp $
  */
 
-#define PATH "/home/andrew/scratch/efserv/"
+#define PATH PREFIX
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
