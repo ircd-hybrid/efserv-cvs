@@ -72,11 +72,11 @@ remove_from_hash(int type, char *name)
 {
  struct HashEntry *he, **phe;
  int hv = hash_text(name);
- for (he=hash[hv], phe=&hash[hv]; he; phe=&he->next, he=he->next)
+ for (he=hash[hv], phe=&hash[hv]; he; phe=&(he->next), he=he->next)
   if (he->type == type && !strcasecmp(name, he->name))
   {
-   *phe = he->next;
    free(he);
+   return;
   }
 }
 

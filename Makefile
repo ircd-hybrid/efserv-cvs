@@ -6,10 +6,15 @@ SRCS=commands.c\
      efserv.c\
      utils.c
 OBJS=${SRCS:%.c=%.o}
+LIBS=-lefence
 
 all: efserv
 ${BIN} : ${OBJS}
-	${CC} ${LDFLAGS} ${LIBS} ${OBJS} -o ${BIN}
+	${CC} ${LIBS} ${LDFLAGS} ${OBJS} ${LIBS} -o ${BIN}
 %.o : %.c
 	${CC} -c ${CFLAGS} $<
 
+depend:
+	${CC} -MM ${SRCS} >.depend
+
+include .depend

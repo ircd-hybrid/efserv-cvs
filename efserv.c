@@ -27,7 +27,7 @@
 #include <string.h>
 #include "efserv.h"
 
-int server_fd;
+int server_fd, send_error = 0;
 
 void init_hash(void);
 void read_config_file(void);
@@ -93,7 +93,10 @@ send_msg(char *msg, ...)
       p += l)
   ;
  if (l <= 0)
+ {
+  send_error = (l==0) ? -1 : errno;
   return -1;
+ }
  return 0;
 }
 
@@ -123,10 +126,10 @@ parse(char *msg, int len)
   return;
  if (parv[0][0] == ':')
  {
-  sender = parv[0];
+  sender = ++parv[0];
   parv[0] = strtok(NULL, " ");
  } else
-  sender = NULL;
+  sender = first_server ? first_server->name : NULL;
  for (p = strtok(NULL, " "); parc<256 && p; p = strtok(NULL, " "))
  {
   if (*p != ':')
@@ -161,6 +164,8 @@ do_main_loop(void)
     *p++ = 0;
     if (skip == 0)
      parse(m, p-m-1);
+    if (send_error != 0)
+     return;
     skip = 0;
     while ((*p == '\r' || *p == '\n') && p < pe)
      p++;
@@ -171,8 +176,8 @@ do_main_loop(void)
   if (m != read_buffer && m != pe)
   {
    memmove(read_buffer, m, pe-m);
-   p -= pe-m;
-   pe -= pe-m;
+   p = read_buffer + (pe-m);
+   pe = read_buffer + (pe-m);
    m = read_buffer;
   } else if (m == pe)
   {
@@ -191,11 +196,13 @@ main(int argc, char **argv)
  read_config_file();
  printf("server_name: %s\n", server_name);
  hash_commands();
- if (connect_server(server_host, 6789))
+ if (connect_server(server_host, port))
   fatal_error("Could not connect to the server: %s\n", strerror(errno));
  send_msg("PASS %s :TS", server_pass);
  printf("server_name: %s\n", server_name);
- send_msg("SERVER %s 1 :efserv services", server_name);
+ send_msg("SERVER %s 1 : * Services *", server_name);
+ send_msg("NICK %s 1 1 +o services %s %s :* Services *", sn,
+          server_name, server_name);
  do_main_loop();
  return 0;
 }

@@ -25,6 +25,9 @@
 char *values[200][2];
 int keyc;
 char *server_name=NULL, *server_pass=NULL, *server_host=NULL;
+/* Interface nick... */
+char *sn = NULL;
+int port;
 
 void
 value_parse(void)
@@ -53,6 +56,7 @@ find_value(const char *key)
 void
 cf_server(void)
 {
+ char *port_str;
  value_parse();
  if (server_name)
   free(server_name);
@@ -60,14 +64,27 @@ cf_server(void)
   free(server_pass);
  if (server_host)
   free(server_host);
+ if (sn)
+  free(sn);
  if (!(server_name = find_value("NAME")) ||
      !(server_pass = find_value("PASS")) ||
-     !(server_host = find_value("HOST")))
-  fatal_error("SERVER tag needs NAME, PASS and HOST values.");
+     !(server_host = find_value("HOST")) ||
+     !(port_str = find_value("PORT")) ||
+     !(sn = find_value("NICK")))
+  fatal_error("SERVER tag needs NAME, PASS, PORT, NICK and HOST values.\n");
  server_name = strdup(server_name);
  server_pass = strdup(server_pass);
  server_host = strdup(server_host);
- printf("Name: %s\n", server_name);
+ sn = strdup(sn);
+ if ((port = strtoul(port_str, NULL, 10)) < 1 || port > 0xFFFF)
+  fatal_error("PORT in SERVER tag needs to be a valid integer.\n");
+}
+
+void
+check_complete(void)
+{
+ if (server_name == NULL)
+  fatal_error("No SERVER line given in config file.\n");
 }
 
 void
@@ -86,4 +103,5 @@ read_config_file(void)
   if (!strcasecmp(keyword, "SERVER"))
    cf_server();
  }
+ check_complete();
 }

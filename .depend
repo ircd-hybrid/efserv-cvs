@@ -1,0 +1,4 @@
+commands.o: commands.c efserv.h
+config.o: config.c efserv.h
+efserv.o: efserv.c efserv.h
+utils.o: utils.c efserv.h
