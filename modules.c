@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: modules.c,v 1.7 2001/12/10 07:04:46 a1kmm Exp $
+ * $Id: modules.c,v 1.8 2001/12/10 07:47:20 a1kmm Exp $
  */
 
 #define PATH PREFIX
@@ -28,19 +28,19 @@
 #include <time.h>
 #include <unistd.h>
 
-int reload_module=0, die=0;
+int reload_module = 0, die = 0;
 int connected = 0, server_count = 0, minimum_servers = 0;
 time_t channel_record_time = 0;
 void *mmod;
 int server_fd = -1;
-char *server_name=NULL, *server_pass=NULL, *server_host=NULL;
+char *server_name = NULL, *server_pass = NULL, *server_host = NULL;
 char *sn = NULL;
 int port;
 FILE *logfile;
 
 /* After all that, these globals do need to be here. */
 struct List *HKeywords, *Channels, *serv_admins, *VoteServers, *Hubs,
-            *JupeExempts, *Servers, *Users, *Monitors, *Hosts;
+  *JupeExempts, *Servers, *Users, *Monitors, *Hosts;
 struct Server *first_server;
 struct HashEntry *hash[HASHSIZE];
 
@@ -53,11 +53,11 @@ unsigned long reloadno = 0;
 void
 handle_sighup(int n)
 {
- void (*do_rehash)(void);
- if (!mmod)
-  return;
- do_rehash = dlsym(mmod, "do_rehash");
- do_rehash();
+  void (*do_rehash) (void);
+  if (!mmod)
+    return;
+  do_rehash = dlsym(mmod, "do_rehash");
+  do_rehash();
 }
 
 /* This is the severe measure of actually quitting IRC(!) and restarting
@@ -76,47 +76,47 @@ restart(void)
 void
 handle_sigusr1(int n)
 {
- reload_module = 1;
+  reload_module = 1;
 }
 
 int
 main(int argc, char **argv)
 {
- void (*do_main_loop)(void);
- void (*do_setup)(void);
- void (*translate_all)(void);
- void *dt;
- /* Force efence in... */
- dt = malloc(1);
- signal(SIGHUP, handle_sighup);
- signal(SIGUSR1, handle_sigusr1);
- mmod = dlopen(PATH"efserv.so", RTLD_NOW);
- if (mmod == NULL)
- {
-  printf("Error loading efserv: %s\n", dlerror());
-  exit(-1);
- }
- do_setup = (void (*)(void))dlsym(mmod, "do_setup");
- reload_module = 1;
- while (die == 0)
- {
-  if (reload_module)
+  void (*do_main_loop) (void);
+  void (*do_setup) (void);
+  void (*translate_all) (void);
+  void *dt;
+  /* Force efence in... */
+  dt = malloc(1);
+  signal(SIGHUP, handle_sighup);
+  signal(SIGUSR1, handle_sigusr1);
+  mmod = dlopen(PATH "efserv.so", RTLD_NOW);
+  if (mmod == NULL)
   {
-   dlclose(mmod);
-   if ((mmod = dlopen(PATH"efserv.so", RTLD_NOW)) == NULL)
-   {
     printf("Error loading efserv: %s\n", dlerror());
     exit(-1);
-   }
-   do_main_loop = (void (*)(void))dlsym(mmod, "do_main_loop");
-   translate_all = (void(*)(void))dlsym(mmod, "TranslateAll");
-   reload_module = 0;
-   reloadno++;
-   translate_all();
-   if (reloadno == 1)
-     do_setup();
   }
-  do_main_loop();
- }
- return 0;
+  do_setup = (void (*)(void))dlsym(mmod, "do_setup");
+  reload_module = 1;
+  while (die == 0)
+  {
+    if (reload_module)
+    {
+      dlclose(mmod);
+      if ((mmod = dlopen(PATH "efserv.so", RTLD_NOW)) == NULL)
+      {
+        printf("Error loading efserv: %s\n", dlerror());
+        exit(-1);
+      }
+      do_main_loop = (void (*)(void))dlsym(mmod, "do_main_loop");
+      translate_all = (void (*)(void))dlsym(mmod, "TranslateAll");
+      reload_module = 0;
+      reloadno++;
+      translate_all();
+      if (reloadno == 1)
+        do_setup();
+    }
+    do_main_loop();
+  }
+  return 0;
 }

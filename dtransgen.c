@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: dtransgen.c,v 1.1 2001/12/10 07:22:35 a1kmm Exp $
+ * $Id: dtransgen.c,v 1.2 2001/12/10 07:47:19 a1kmm Exp $
  */
 #include <stdio.h>
 
@@ -30,9 +30,7 @@ start_function(void)
     return;
   printf("void\n"
          "setup_dyntrans(void)\n"
-         "{\n"
-         "  struct StructType *s;\n"
-         "  struct Field *f;\n");
+         "{\n" "  struct StructType *s;\n" "  struct Field *f;\n");
   done++;
 }
 

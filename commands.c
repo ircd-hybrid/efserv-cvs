@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: commands.c,v 1.11 2001/12/10 07:04:45 a1kmm Exp $
+ * $Id: commands.c,v 1.12 2001/12/10 07:47:19 a1kmm Exp $
  */
 
 #include <stdio.h>
@@ -29,54 +29,53 @@
 #include "struct.h"
 #include "utils.h"
 
-void m_ping(char*, int, char**);
-void m_part(char*, int, char**);
-void m_join(char*, int, char**);
-void m_server(char*, int, char**);
-void m_nick(char*, int, char**);
-void m_squit(char*, int, char**);
-void m_quit(char*, int, char**);
-void m_kill(char*, int, char**);
-void m_mode(char*, int, char**);
-void m_privmsg(char*, int, char**);
-void m_sjoin(char*, int, char**);
-void m_admin(char*, int, char**);
-void m_motd(char*, int, char**);
-void m_version(char*, int, char**);
-void m_whois(char*, int, char**);
-void m_error(char*, int, char**);
-void m_kick(char*, int, char **);
+void m_ping(char *, int, char **);
+void m_part(char *, int, char **);
+void m_join(char *, int, char **);
+void m_server(char *, int, char **);
+void m_nick(char *, int, char **);
+void m_squit(char *, int, char **);
+void m_quit(char *, int, char **);
+void m_kill(char *, int, char **);
+void m_mode(char *, int, char **);
+void m_privmsg(char *, int, char **);
+void m_sjoin(char *, int, char **);
+void m_admin(char *, int, char **);
+void m_motd(char *, int, char **);
+void m_version(char *, int, char **);
+void m_whois(char *, int, char **);
+void m_error(char *, int, char **);
+void m_kick(char *, int, char **);
 
-struct Command Commands[] =
-{
- {"PING", m_ping},
- {"SERVER", m_server},
- {"NICK", m_nick},
- {"SQUIT", m_squit},
- {"QUIT", m_quit},
- {"KILL", m_kill},
- {"MODE", m_mode},
- {"PRIVMSG", m_privmsg},
- {"SJOIN", m_sjoin},
- {"VERSION", m_version},
- {"ADMIN", m_admin},
- {"MOTD", m_motd},
- {"PART", m_part},
- {"JOIN", m_join},
- {"WHOIS", m_whois},
- {"ERROR", m_error},
- {"KICK", m_kick},
- {0, 0}
+struct Command Commands[] = {
+  {"PING", m_ping},
+  {"SERVER", m_server},
+  {"NICK", m_nick},
+  {"SQUIT", m_squit},
+  {"QUIT", m_quit},
+  {"KILL", m_kill},
+  {"MODE", m_mode},
+  {"PRIVMSG", m_privmsg},
+  {"SJOIN", m_sjoin},
+  {"VERSION", m_version},
+  {"ADMIN", m_admin},
+  {"MOTD", m_motd},
+  {"PART", m_part},
+  {"JOIN", m_join},
+  {"WHOIS", m_whois},
+  {"ERROR", m_error},
+  {"KICK", m_kick},
+  {0, 0}
 };
 
 void
 hash_commands(void)
 {
- struct Command *cmd;
- for (cmd=Commands; cmd; cmd++)
- {
-  if (cmd->name == NULL)
-   return;
-  add_to_hash(HASH_COMMAND, cmd->name, cmd);
- }
+  struct Command *cmd;
+  for (cmd = Commands; cmd; cmd++)
+  {
+    if (cmd->name == NULL)
+      return;
+    add_to_hash(HASH_COMMAND, cmd->name, cmd);
+  }
 }

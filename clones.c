@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clones.c,v 1.9 2001/12/02 03:59:38 a1kmm Exp $
+ * $Id: clones.c,v 1.10 2001/12/10 07:47:19 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -33,11 +33,11 @@ cleanup_hosts(void)
 {
   struct List *node, *nnode;
   struct Host *h;
-  FORLISTDEL(node,nnode,Hosts,struct Host*,h)
+  FORLISTDEL(node, nnode, Hosts, struct Host *, h)
   {
     int rtime = h->full ? UHOST_NICKCHANGE_RATE : HOST_NICKCHANGE_RATE;
-    h->rate -= (timenow-h->last_recalc)/rtime;
-    h->last_recalc = timenow - (timenow-h->last_recalc)%rtime;
+    h->rate -= (timenow - h->last_recalc) / rtime;
+    h->last_recalc = timenow - (timenow - h->last_recalc) % rtime;
     if (h->rate < 0)
       h->rate = 0;
     if (h->count == 0 && h->rate == 0)
@@ -74,33 +74,29 @@ report_cloner(struct Host *h, char *term, char *onick)
     return;
 
   h->last_report = timenow;
-  FORLIST(node,Monitors,struct User*,usr)
-
-  if (h->full)
+  FORLIST(node, Monitors, struct User *, usr)if (h->full)
     send_msg(":%s NOTICE %s :%s ON %s", server_name, usr->nick,
-	     term, h->host);
+             term, h->host);
   else
     send_msg(":%s NOTICE %s :%s ON *@%s", server_name, usr->nick,
-	     term, h->host);
+             term, h->host);
 }
 
 void
 add_cloner(char *nick, char *user, char *host)
 {
   struct Host *h1, *h2;
-  char uah[HOSTLEN+USERLEN+1];
+  char uah[HOSTLEN + USERLEN + 1];
 
-  strncpy(uah, user, USERLEN-1)
-    [USERLEN-1] = '\0';
+  strncpy(uah, user, USERLEN - 1)[USERLEN - 1] = '\0';
 
   strcat(uah, "@");
-  strncat(uah, host, HOSTLEN-1);
+  strncat(uah, host, HOSTLEN - 1);
 
   if ((h1 = find_host(uah)) == NULL)
   {
     h1 = malloc(sizeof(*h1));
-    strncpy(h1->host, uah, HOSTLEN+USERLEN)
-      [HOSTLEN+USERLEN] = '\0';
+    strncpy(h1->host, uah, HOSTLEN + USERLEN)[HOSTLEN + USERLEN] = '\0';
     h1->warned = 0;
     h1->count = h1->rate = 0;
     h1->full = 1;
@@ -113,8 +109,7 @@ add_cloner(char *nick, char *user, char *host)
   if ((h2 = find_host(host)) == NULL)
   {
     h2 = malloc(sizeof(*h2));
-    strncpy(h2->host, host, HOSTLEN-1)
-      [HOSTLEN-1] = '\0';
+    strncpy(h2->host, host, HOSTLEN - 1)[HOSTLEN - 1] = '\0';
     h2->count = h2->rate = h2->full = 0;
     h2->last_recalc = timenow;
     h2->last_report = 0;
@@ -122,14 +117,14 @@ add_cloner(char *nick, char *user, char *host)
     add_to_hash(HASH_HOST, h2->host, h2);
     add_to_list(&Hosts, h2);
   }
-  h1->rate -= (timenow-h1->last_recalc)/UHOST_NICKCHANGE_RATE;
+  h1->rate -= (timenow - h1->last_recalc) / UHOST_NICKCHANGE_RATE;
   h1->last_recalc = timenow -
-                    (timenow-h1->last_recalc)%UHOST_NICKCHANGE_RATE;
+    (timenow - h1->last_recalc) % UHOST_NICKCHANGE_RATE;
   if (h1->rate < 0)
     h1->rate = 0;
-  h2->rate -= (timenow-h2->last_recalc)/HOST_NICKCHANGE_RATE;
+  h2->rate -= (timenow - h2->last_recalc) / HOST_NICKCHANGE_RATE;
   h2->last_recalc = timenow -
-                    (timenow-h2->last_recalc)%HOST_NICKCHANGE_RATE;
+    (timenow - h2->last_recalc) % HOST_NICKCHANGE_RATE;
   if (h2->rate < 0)
     h2->rate = 0;
   h1->count++;
@@ -162,26 +157,25 @@ void
 add_nickchange(char *nick, char *user, char *host)
 {
   struct Host *h1, *h2;
-  char uah[HOSTLEN+USERLEN+1];
+  char uah[HOSTLEN + USERLEN + 1];
 
-  strncpy(uah, user, USERLEN-1)
-    [USERLEN-1] = '\0';
+  strncpy(uah, user, USERLEN - 1)[USERLEN - 1] = '\0';
 
   strcat(uah, "@");
-  strncat(uah, host, HOSTLEN-1);
+  strncat(uah, host, HOSTLEN - 1);
 
   if ((h1 = find_host(uah)) == NULL)
     return;
   if ((h2 = find_host(host)) == NULL)
     return;
-  h1->rate -= (timenow-h1->last_recalc)/UHOST_NICKCHANGE_RATE;
+  h1->rate -= (timenow - h1->last_recalc) / UHOST_NICKCHANGE_RATE;
   h1->last_recalc = timenow -
-                    (timenow-h1->last_recalc)%UHOST_NICKCHANGE_RATE;
+    (timenow - h1->last_recalc) % UHOST_NICKCHANGE_RATE;
   if (h1->rate < 0)
     h1->rate = 0;
-  h2->rate -= (timenow-h2->last_recalc)/HOST_NICKCHANGE_RATE;
+  h2->rate -= (timenow - h2->last_recalc) / HOST_NICKCHANGE_RATE;
   h2->last_recalc = timenow -
-                    (timenow-h2->last_recalc)%HOST_NICKCHANGE_RATE;
+    (timenow - h2->last_recalc) % HOST_NICKCHANGE_RATE;
   if (h2->rate < 0)
     h2->rate = 0;
   h1->rate++;
@@ -202,12 +196,11 @@ void
 remove_cloner(char *user, char *host)
 {
   struct Host *h1, *h2;
-  char uah[HOSTLEN+USERLEN+1];
+  char uah[HOSTLEN + USERLEN + 1];
 
-  strncpy(uah, user, USERLEN-1)
-    [USERLEN-1] = '\0';
+  strncpy(uah, user, USERLEN - 1)[USERLEN - 1] = '\0';
   strcat(uah, "@");
-  strncat(uah, host, HOSTLEN-1);
+  strncat(uah, host, HOSTLEN - 1);
   if ((h1 = find_host(uah)) == NULL || (h2 = find_host(host)) == NULL)
     return;
   h1->count--;

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: log.c,v 1.3 2001/11/11 22:13:52 wcampbel Exp $
+ * $Id: log.c,v 1.4 2001/12/10 07:47:20 a1kmm Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,42 +32,42 @@ extern FILE *logfile;
 void
 fatal_error(const char *format, ...)
 {
- va_list args;
- va_start(args, format);
- vfprintf(stderr, format, args);
- va_end(args);
- if (logfile != NULL)
- {
-  vfprintf(logfile, format, args);
-  fclose(logfile);
- }
- exit(-1);
+  va_list args;
+  va_start(args, format);
+  vfprintf(stderr, format, args);
+  va_end(args);
+  if (logfile != NULL)
+  {
+    vfprintf(logfile, format, args);
+    fclose(logfile);
+  }
+  exit(-1);
 }
 
 void
 open_logfile(void)
 {
- if (logfile != NULL)
-  return;
- logfile = fopen(LOGFILE, "a");
- if (logfile == NULL)
-  fatal_error("Could not open the log file.\n");
+  if (logfile != NULL)
+    return;
+  logfile = fopen(LOGFILE, "a");
+  if (logfile == NULL)
+    fatal_error("Could not open the log file.\n");
 }
 
 void
 log(const char *format, ...)
 {
- va_list args;
- char tnow[50];
- timenow = time(0);
- va_start(args, format);
- strcpy(tnow, ctime(&timenow));
- tnow[strlen(tnow)-1] = 0;
- fprintf(stderr, "[%s] ", tnow);
- vfprintf(stderr, format, args);
- if (logfile == NULL)
-  return;
- fprintf(logfile, "[%s] ", tnow);
- vfprintf(logfile, format, args);
- fflush(logfile);
+  va_list args;
+  char tnow[50];
+  timenow = time(0);
+  va_start(args, format);
+  strcpy(tnow, ctime(&timenow));
+  tnow[strlen(tnow) - 1] = 0;
+  fprintf(stderr, "[%s] ", tnow);
+  vfprintf(stderr, format, args);
+  if (logfile == NULL)
+    return;
+  fprintf(logfile, "[%s] ", tnow);
+  vfprintf(logfile, format, args);
+  fflush(logfile);
 }

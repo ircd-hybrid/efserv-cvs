@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: dyntfuncs.c,v 1.1 2001/12/10 07:04:45 a1kmm Exp $
+ * $Id: dyntfuncs.c,v 1.2 2001/12/10 07:47:20 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,7 +32,7 @@
 
 extern struct List *structtypes, *structinsts;
 extern unsigned long reloadno;
-struct List* addrhash[0x3FF];
+struct List *addrhash[0x3FF];
 struct List *tptrs = NULL, *queueptrs = NULL, *simplemap = NULL;
 
 /* The generated setup function: */
@@ -42,35 +42,35 @@ struct QueuedTranslation
 {
 #define AHT_QT ((void*)1)
 #define AHO_QTADDR (sizeof(int) + sizeof(struct List*))
- void *type;
- struct List *n;
- void *address;
- struct StructType *t;
+  void *type;
+  struct List *n;
+  void *address;
+  struct StructType *t;
 };
 
 struct TPtr
 {
 #define AHT_TPTR ((void*)2)
 #define AHO_TPOLD (sizeof(int)+sizeof(struct List*))
- void *type;
- struct List *n;
- void *old;
- void *new;
+  void *type;
+  struct List *n;
+  void *old;
+  void *new;
 };
 
 struct SimpleMap
 {
- void *old;
- void **saveto;
+  void *old;
+  void **saveto;
 };
 
-void*
+void *
 FindByAddress(void *a, void *type, int offset)
 {
   void *d;
   struct List *n;
-  FORLIST(n, addrhash[(((unsigned long)a)>>2) & 0x3FF], void*, d)
-    if ((*(void**)d) == type && *(void**)(((char*)d)+offset) == a)
+  FORLIST(n, addrhash[(((unsigned long)a) >> 2) & 0x3FF], void *, d)
+    if ((*(void **)d) == type && *(void **)(((char *)d) + offset) == a)
       return d;
   return NULL;
 }
@@ -79,18 +79,18 @@ void
 AddToAddressHash(void *a, void *type, int offset)
 {
   struct List **h = addrhash +
-                (((*(unsigned long*)(((char*)a) + offset))>>2) & 0x3FF);
-  *(void**)a = type;
-  *(struct List**)(((char*)a)+sizeof(int)) = add_to_list(h, a);
+    (((*(unsigned long *)(((char *)a) + offset)) >> 2) & 0x3FF);
+  *(void **)a = type;
+  *(struct List **)(((char *)a) + sizeof(int)) = add_to_list(h, a);
 }
 
 void
 DeleteFromAddressHash(void *a, int offset)
 {
   struct List *n, **h;
-  char *ad = (char*)a;
-  n = *(struct List**)(ad + sizeof(int));
-  h = addrhash + (((*(unsigned long*)(ad + offset))>>2) & 0x3FF);
+  char *ad = (char *)a;
+  n = *(struct List **)(ad + sizeof(int));
+  h = addrhash + (((*(unsigned long *)(ad + offset)) >> 2) & 0x3FF);
   remove_from_list(h, n);
 }
 
@@ -100,56 +100,56 @@ RegisterStructType(struct StructType *st)
   struct StructType *stt;
   struct Field *f1, *f2;
   struct List *n, *n2, *n3, *n4;
-  int ofc=0, mfc=0;
+  int ofc = 0, mfc = 0;
   /* This is needed as the string may become unavailable later. */
   st->name = strdup(st->name);
   st->serno = reloadno;
-  FORLIST(n, st->fields, struct Field*, f1)
+  FORLIST(n, st->fields, struct Field *, f1)
   {
     f1->old_offset = -1;
     f1->old_nrepeats = -1;
     ofc++;
   }
-  FORLIST(n, structtypes, struct StructType*,stt)
+  FORLIST(n, structtypes, struct StructType *, stt)
     if (!strcmp(stt->name, st->name))
+  {
+    st->olen = stt->len;
+    /* Time to set up the translation fields. */
+    n->data = st;
+    FORLIST(n2, st->fields, struct Field *, f1)
+      FORLISTDEL(n3, n4, stt->fields, struct Field *, f2)
+      if (!strcmp(f2->name, f1->name))
     {
-      st->olen = stt->len;
-      /* Time to set up the translation fields. */
-      n->data = st;
-      FORLIST(n2, st->fields, struct Field*, f1)
-        FORLISTDEL(n3, n4, stt->fields, struct Field*, f2)
-          if (!strcmp(f2->name, f1->name))
-          {
-            mfc++;
-            if (f1->new_offset != f2->new_offset)
-              st->flags |= SF_MODIFIED;
-            f1->old_nrepeats = f2->nrepeats;
-            f1->old_offset = f2->new_offset;
-            remove_from_list(&stt->fields, n3);
-            free(f2);
-          }
-      free(stt->name);
-      FORLISTDEL(n2, n3, stt->fields, struct Field*, f1)
-      {
-        free(n2);
-        free(f1->name);
-        free(f1);
-      }
-      free(stt);
-      if (mfc != ofc)
+      mfc++;
+      if (f1->new_offset != f2->new_offset)
         st->flags |= SF_MODIFIED;
-      return;
+      f1->old_nrepeats = f2->nrepeats;
+      f1->old_offset = f2->new_offset;
+      remove_from_list(&stt->fields, n3);
+      free(f2);
     }
+    free(stt->name);
+    FORLISTDEL(n2, n3, stt->fields, struct Field *, f1)
+    {
+      free(n2);
+      free(f1->name);
+      free(f1);
+    }
+    free(stt);
+    if (mfc != ofc)
+      st->flags |= SF_MODIFIED;
+    return;
+  }
   st->flags |= SF_NEW;
   add_to_list(&structtypes, st);
 }
 
-struct StructType*
+struct StructType *
 FindStructType(const char *name)
 {
   struct StructType *st;
   struct List *n;
-  FORLIST(n, structtypes, struct StructType*, st)
+  FORLIST(n, structtypes, struct StructType *, st)
     if (!strcmp(st->name, name))
       return st;
   return NULL;
@@ -161,15 +161,15 @@ SaveStructType(const char *name, struct StructType **to)
   struct StructType *st;
   struct List *n;
   struct SimpleMap *sm;
-  FORLIST(n, structtypes, struct StructType*, st)
+  FORLIST(n, structtypes, struct StructType *, st)
     if (!strcmp(st->name, name) && st->serno == reloadno)
-    {
-      *to = st;
-      return;
-    }
+  {
+    *to = st;
+    return;
+  }
   sm = malloc(sizeof(*sm));
-  sm->old = (void*)name;
-  sm->saveto = (void**)to;
+  sm->old = (void *)name;
+  sm->saveto = (void **)to;
   add_to_list(&simplemap, sm);
 }
 
@@ -180,7 +180,7 @@ RegisterStructInst(const char *name, const char *type, int isptr,
   struct List *n;
   struct StructInst *si;
   struct StructType *st;
-  FORLIST(n, structinsts, struct StructInst*, si)
+  FORLIST(n, structinsts, struct StructInst *, si)
   {
     if (strcmp(si->name, name))
       continue;
@@ -191,7 +191,7 @@ RegisterStructInst(const char *name, const char *type, int isptr,
     if (si->isptr != isptr)
       restart();
     if (isptr)
-      *((void**)data) = *((void**)si->data);
+      *((void **)data) = *((void **)si->data);
     si->data = data;
     si->serno = reloadno;
     return;
@@ -204,7 +204,7 @@ RegisterStructInst(const char *name, const char *type, int isptr,
   si->serno = reloadno;
   si->nreps = nreps;
   if ((st = FindStructType(type)) != NULL)
-    memset(data, 0, (isptr ? sizeof(void*) : st->len) * nreps);
+    memset(data, 0, (isptr ? sizeof(void *) : st->len) * nreps);
   add_to_list(&structinsts, si);
 }
 
@@ -221,7 +221,7 @@ QueueTranslate(void *address, struct StructType *t, void **ptrto)
   /* Check it isn't already translated... */
   if (ptrto != NULL)
   {
-    if ((tp = (struct TPtr*)FindByAddress(address, AHT_TPTR, AHO_TPOLD)))
+    if ((tp = (struct TPtr *)FindByAddress(address, AHT_TPTR, AHO_TPOLD)))
     {
       *ptrto = tp->new;
       return;
@@ -235,14 +235,14 @@ QueueTranslate(void *address, struct StructType *t, void **ptrto)
     qt->address = address;
     qt->t = t;
     /* Do a test to catch bugs... */
-    c = *((char*)qt->address);
+    c = *((char *)qt->address);
     AddToAddressHash(qt, AHT_QT, AHO_QTADDR);
     add_to_list(&queueptrs, qt);
   }
   else
   {
-    c = ((char*)address)[0];
-    ((char*)address)[0] = c;
+    c = ((char *)address)[0];
+    ((char *)address)[0] = c;
   }
   /* It doesn't matter if we schedule the same simple mapping
    * twice.
@@ -262,29 +262,29 @@ Translate(struct QueuedTranslation *qt, void *addr)
   struct List *n;
   struct Field *f;
   struct TPtr *tp;
-  char *ns, *os = (char*)qt->address;
-  int ch = qt->t->flags & (SF_NEW|SF_MODIFIED);
+  char *ns, *os = (char *)qt->address;
+  int ch = qt->t->flags & (SF_NEW | SF_MODIFIED);
   if (ch && addr == NULL)
     ns = (char *)malloc(qt->t->len);
   else if (addr == NULL)
-    ns = (char*)qt->address;
+    ns = (char *)qt->address;
   else
-    ns = (char*)addr;
-  FORLIST(n, qt->t->fields, struct Field*, f)
+    ns = (char *)addr;
+  FORLIST(n, qt->t->fields, struct Field *, f)
   {
     if (ch && f->old_offset != -1)
     {
       memcpy(ns + f->new_offset, os + f->old_offset,
-             f->len * ((f->nrepeats > f->old_nrepeats)?
-               f->old_nrepeats : f->nrepeats));
+             f->len * ((f->nrepeats > f->old_nrepeats) ?
+                       f->old_nrepeats : f->nrepeats));
       if (f->nrepeats > f->old_nrepeats)
-        memset(ns + f->new_offset + f->old_nrepeats*f->len, 0,
+        memset(ns + f->new_offset + f->old_nrepeats * f->len, 0,
                f->len * (f->nrepeats - f->old_nrepeats));
     }
     else if (ch && f->init_func)
     {
       int i;
-      for (i=0; i<f->nrepeats; i++)
+      for (i = 0; i < f->nrepeats; i++)
         f->init_func(ns, ns + f->new_offset + f->len * i, f->len);
     }
     else if (ch && f->flags & SFF_NEEDRESTART)
@@ -317,8 +317,8 @@ Translate(struct QueuedTranslation *qt, void *addr)
        * a structure.
        */
       struct SimpleMap *sm = malloc(sizeof(*sm));
-      sm->old = *(void**)(ns + f->new_offset);
-      sm->saveto = (void**)(ns + f->new_offset);
+      sm->old = *(void **)(ns + f->new_offset);
+      sm->saveto = (void **)(ns + f->new_offset);
       add_to_list(&simplemap, sm);
       continue;
     }
@@ -326,8 +326,8 @@ Translate(struct QueuedTranslation *qt, void *addr)
       continue;
     if (f->flags & SFF_ISPOINTER)
     {
-      QueueTranslate(*(void**)(ns + f->new_offset), f->stype,
-                     (void**)(ns + f->new_offset));
+      QueueTranslate(*(void **)(ns + f->new_offset), f->stype,
+                     (void **)(ns + f->new_offset));
     }
     else
     {
@@ -358,8 +358,7 @@ TranslateList(struct List *l, const char *t)
   struct StructType *st = FindStructType(t);
   if (st == NULL)
     return;
-  FORLIST(n, l, void*, p)
-    QueueTranslate(p, st, &n->data);
+  FORLIST(n, l, void *, p)QueueTranslate(p, st, &n->data);
 }
 
 void
@@ -380,7 +379,7 @@ TranslateAll(void)
   {
     n = simplemap;
     sm = n->data;
-    if ((st = FindStructType((char*)sm->old)))
+    if ((st = FindStructType((char *)sm->old)))
       *sm->saveto = st;
     simplemap = simplemap->next;
     free(n);
@@ -394,7 +393,7 @@ TranslateAll(void)
   TranslateList(Servers, "Server");
   TranslateList(Users, "User");
   TranslateList(Hosts, "Host");
-  FORLIST(n, structinsts, struct StructInst*, si)
+  FORLIST(n, structinsts, struct StructInst *, si)
   {
     int i;
     /* XXX - should we bother to free here? */
@@ -406,46 +405,46 @@ TranslateAll(void)
       exit(0);
     }
     if (si->data == NULL ||
-        (si->isptr && si->nreps == 0 && *((void**)si->data) == NULL))
+        (si->isptr && si->nreps == 0 && *((void **)si->data) == NULL))
       continue;
-    for (i=0; i<si->nreps; i++)
+    for (i = 0; i < si->nreps; i++)
     {
       if (si->isptr)
-        QueueTranslate(((void**)si->data)[i], st, ((void**)si->data) + i);
+        QueueTranslate(((void **)si->data)[i], st, ((void **)si->data) + i);
       else
-        QueueTranslate((void*)(((char*)si->data) + i*st->olen), st, NULL);
+        QueueTranslate((void *)(((char *)si->data) + i * st->olen), st, NULL);
     }
   }
   /* Okay, we have all those globals on the queue. Go through the
    * queue, and translate structures, queueing new ones as we come
    * to them... */
-  while(queueptrs)
+  while (queueptrs)
   {
     n = queueptrs;
-    qt = (struct QueuedTranslation*)queueptrs->data;
+    qt = (struct QueuedTranslation *)queueptrs->data;
     Translate(qt, NULL);
     DeleteFromAddressHash(qt, AHO_QTADDR);
     free(qt);
     remove_from_list(&queueptrs, n);
   }
-  while(simplemap)
+  while (simplemap)
   {
     n = simplemap;
-    sm = (struct SimpleMap*)simplemap->data;
+    sm = (struct SimpleMap *)simplemap->data;
     /* If no translation found, no translation is probably needed. */
-    if ((tp = (struct TPtr*)FindByAddress(sm->old, AHT_TPTR, AHO_TPOLD))
-         != NULL)
+    if ((tp = (struct TPtr *)FindByAddress(sm->old, AHT_TPTR, AHO_TPOLD))
+        != NULL)
     {
       *sm->saveto = tp->new;
     }
     free(sm);
     remove_from_list(&simplemap, n);
   }
-  while(tptrs)
+  while (tptrs)
   {
     n = tptrs;
     tptrs = tptrs->next;
-    free(((struct TPtr*)n->data)->n);
+    free(((struct TPtr *)n->data)->n);
     free(n->data);
     free(n);
   }
