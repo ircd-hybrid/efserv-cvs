@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: efserv.c,v 1.5 2001/05/29 09:29:44 a1kmm Exp $
+ * $Id: efserv.c,v 1.6 2001/05/30 04:10:15 a1kmm Exp $
  */
 
 #include <stdarg.h>
@@ -32,20 +32,11 @@
 
 int send_error = 0;
 time_t timenow;
-extern int server_fd;
+extern int server_fd, connected;
 
 void init_hash(void);
 void read_all_config(void);
-
-void
-fatal_error(const char *error, ...)
-{
- va_list args;
- va_start(args, error);
- vfprintf(stderr, error, args);
- va_end(args);
- exit(-1);
-}
+void open_logfile(void);
 
 unsigned long
 resolve_host(const char *host)
@@ -166,15 +157,81 @@ check_events(void)
 }
 
 void
+wipe_client_status(void)
+{
+ struct List *node, *nnode;
+ struct Server *svr;
+ /* This takes care of the users and the channels... */
+ FORLISTDEL(node,nnode,Servers,struct Server*,svr)
+ {
+  if (svr->jupe)
+   destroy_server_links(svr);
+  else
+   destroy_server(svr);
+ }
+}
+
+void
+do_connect_server(void)
+{
+ struct List *node;
+ struct Server *svr;
+ wipe_client_status();
+ pick_a_hub();
+ log("[Hub] Connecting to hub %s:%d.\n", server_host, port);
+ while (connect_server(server_host, port) == -1)
+ {
+  log("[Hub] Could not connect to hub %s:%d: %s\n", server_host, port,
+      strerror(errno));
+  sleep(3);
+  pick_a_hub();
+  log("[Hub] Connecting to hub %s:%d.\n", server_host, port);
+ }
+ log("[Hub] Connected to hub %s:%d\n", server_host, port);
+ connected = 1;
+ send_msg("CAPAB :QS EX CHW IE HOPS HUB AOPS");
+ send_msg("PASS %s :TS", server_pass);
+ send_msg("SERVER %s 1 : * Services *", server_name);
+ send_msg("NICK %s 1 1 +o services %s %s :* Services *", sn,
+          server_name, server_name);
+ FORLIST(node,Servers,struct Server*,svr)
+  if (IsJuped(svr))
+  {
+   send_msg(":%s SQUIT %s :Juped: %s", sn, svr->name, svr->jupe->reason);
+   send_msg("SERVER %s 2 :Juped: %s", svr->name, svr->jupe->reason);
+  }
+}
+
+void
+do_setup_commands(void)
+{
+ /* Clear commands from hash... */
+ wipe_type_from_hash(HASH_COMMAND, NULL);
+ hash_commands();
+}
+
+void
 do_main_loop(void)
 {
  char read_buffer[2048], *p = read_buffer, *pe = read_buffer, *m;
  int rv, skip = 0;
+ do_setup_commands();
+ if (connected == 0)
+  do_connect_server();
  while (reload_module == 0 && die == 0)
  {
   check_events();
   if ((rv = read(server_fd, p, 2048-(pe-read_buffer))) <= 0)
+  {
+   if (rv < 0 && (errno == EAGAIN || errno == EINTR))
+    continue;
+   log("[Hub] Connection to hub lost: %s\n",
+       rv ? strerror(errno) : "Connection reset by peer");
+   close(server_fd);
+   connected = 0;
+   sleep(3);
    return;
+  }
   timenow = time(0);
   m = p;
   for (pe = p + rv; p < pe; p++)
@@ -184,7 +241,13 @@ do_main_loop(void)
     if (skip == 0)
      parse(m, p-m-1);
     if (send_error != 0)
+    {
+     close(server_fd);
+     connected = 0;
+     log("[Hub] Connection to hub lost: send error.\n");
+     sleep(3);
      return;
+    }
     skip = 0;
     while ((*p == '\r' || *p == '\n') && p < pe)
      p++;
@@ -212,16 +275,12 @@ do_main_loop(void)
 void
 do_setup(void)
 {
+ srand(time(0));
+ open_logfile();
+ timenow = time(0);
+ log("[Status] Services starting.\n");
  init_hash();
  read_all_config();
- printf("server_name: %s\n", server_name);
- hash_commands();
- if (connect_server(server_host, port))
-  fatal_error("Could not connect to the server: %s\n", strerror(errno));
- send_msg("PASS %s :TS", server_pass);
- printf("server_name: %s\n", server_name);
- send_msg("SERVER %s 1 : * Services *", server_name);
- send_msg("NICK %s 1 1 +o services %s %s :* Services *", sn,
-          server_name, server_name);
+ load_channel_opdb();
  return;
 }

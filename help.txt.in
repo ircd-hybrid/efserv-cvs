@@ -1,13 +1,25 @@
-\039services.int\03 provides services to help IRC administrators manage their
-networks better.
-To use it, you must oper up with admin O:line and set yourself +a. Then you
-can interface it with:
-\035/msg Services command ...
-The following commands are supported:
-- JUPE servername reason - Jupes a server.
-- SMODE #channel {([+|-])[a|o|b]}+ - Set a channel admin only, oper only, or banned.
-- ADMIN nick pass - Makes you a services admin.
-- REOP #channel nick - Regains ops in a channel.
-- HELP - Requests help.
-This services was started by Andrew Miller(A1kmm)<a1kmm@mware.virtualave.net>
-and contributed to by many others.
+\039efserv\03 services facilitate in the smooth running of your IRC network.
+Much of efserv's functionality is automated. However, some commands can
+be given by IRC operators and administrators. Type
+\02/msg services <command> ...
+Note that you should always check that it is the real services before
+sending passwords or sensitive data to it.
+The following commands are available:
+- \02HELP\02 - Prints this message.
+- \02ADMIN <username> <password>\02 - Lets you log in as an administrator.
+- \02JUPE <server> <reason>\02 - Starts a call for votes to jupe.
+- \02JUPE <server> +\02 - Votes for a jupe.
+- \02JUPE <server> -\02 - Votes against a jupe.
+Note that a jupe should be regarded as a last resort, and should only
+be used in the following situations:
+1) Server is possibly compromised/hacked.
+2) O-lines are compromised, with no-one to D-line.
+3) Trouble with route which breaks the network, causing splits.
+Each server gets one, and only one, vote. Anyone on your server can change
+your vote once it is placed, although a global operator can not change a
+vote which was placed by an administrator.
+3 admin votes(the admin must have logged in with \02ADMIN\02, or 5 oper
+votes result in the activation/deactivation of a jupe.
+There are stringent policies in place for dealing with jupe abuse.
+For more information, see:
+\0312https://voting.blackened.com/docs/services.int.shtml

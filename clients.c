@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.3 2001/05/29 09:29:43 a1kmm Exp $
+ * $Id: clients.c,v 1.4 2001/05/30 04:10:14 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -252,9 +252,20 @@ destroy_server_links(struct Server *svr)
   }
  }
  FORLISTDEL(node,nnode,Users,struct User*,usr)
-  FORLIST(node2,DeadServers,struct Server*,csvr)
-   if (usr->server == csvr)
-    destroy_user(usr);
+ FORLISTDEL(node,nnode,Users,struct User*,usr)
+ {
+  if (usr->server == svr)
+   destroy_user(usr);
+  else
+  {
+   FORLIST(node2,DeadServers,struct Server*,csvr)
+    if (usr->server == csvr)
+    {
+     destroy_user(usr);
+     break;
+    }
+  }
+ }
  FORLISTDEL(node,nnode,DeadServers,struct Server*,csvr)
  {
   free(node);
@@ -346,6 +357,19 @@ m_admin(char *sender, int parc, char **parv)
 void
 m_motd(char *sender, int parc, char **parv)
 {
- send_msg(":%s NOTICE %s :Please contact your local server administrator"
-          " if you would like your channel re-opped.", sn, sender);
+ send_msg(":%s NOTICE %s :This is services. It has not MOTD.", sn, sender);
+}
+
+void
+m_whois(char *sender, int parc, char **parv)
+{
+ send_msg(":%s NOTICE %s :Services is IRC Services.", sn, sender);
+}
+
+void
+m_error(char *sender, int parc, char **parv)
+{
+ if (parc < 2)
+  return;
+ log("[Hub] Received error: %s.\n", parv[1]);
 }

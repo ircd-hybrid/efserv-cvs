@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: utils.c,v 1.5 2001/05/29 09:29:45 a1kmm Exp $
+ * $Id: utils.c,v 1.6 2001/05/30 04:10:17 a1kmm Exp $
  */
 
 #include <ctype.h>
@@ -24,7 +24,6 @@
 #include <strings.h>
 #include <assert.h>
 #include "efserv.h"
-
 
 #define HASHSIZE 0x1000
 
@@ -82,6 +81,25 @@ remove_from_hash(int type, char *name)
    *phe = he->next;
    free(he);
    return;
+  }
+}
+
+void
+wipe_type_from_hash(int type, void (*cdata)(void*))
+{
+ int hv;
+ struct HashEntry *he, **phe;
+ for (hv=0; hv<HASHSIZE; hv++)
+  for (he=hash[hv],phe=&hash[hv]; he; he=*phe)
+  {
+   if (he->type == type)
+   {
+    *phe = he->next;
+    if (cdata)
+     cdata(he->data);
+    free(he);
+   } else
+    phe = &he->next;
   }
 }
 

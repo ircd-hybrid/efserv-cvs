@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: channels.c,v 1.3 2001/05/29 09:29:43 a1kmm Exp $
+ * $Id: channels.c,v 1.4 2001/05/30 04:10:14 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,6 +30,8 @@ check_channel_status(struct Channel *ch)
  int count = 0, i;
  struct ChanopUser *cou, *cou2;
  struct User *usr;
+ if (server_count < minimum_servers)
+  return;
  if (ch->ops == NULL)
  {
   if (ch->exops == NULL)
@@ -60,6 +62,8 @@ check_channel_status(struct Channel *ch)
      remove_from_list(&ch->nonops, node);
      add_to_list(&ch->ops, usr);
      send_msg(":%s MODE %s +o %s", sn, ch->name, usr->nick);
+     log("[AutoReop] Auto-reopped %s on channel %s\n", usr->nick,
+         ch->name);
     }
    }
   }
@@ -67,6 +71,16 @@ check_channel_status(struct Channel *ch)
    free(node);
   return;
  }
+#ifdef MINIMUM_OPS
+ if (ch->exops == NULL)
+ {
+  count = 0;
+  FORLIST(node,ch->ops,struct User*,usr)
+   count++;
+  if (count < MINIMUM_OPS)
+   return;
+ }
+#endif
  /* Now go through all the ops... */
  FORLIST(node,ch->ops,struct User*,usr)
  {
@@ -101,7 +115,7 @@ cleanup_channels(void)
  static time_t last_reop = 0;
  struct List *node, *nnode;
  struct Channel *ch;
- if (timenow - last_reop > 5/* *60 */)
+ if (timenow - last_reop > CHAN_SLICE_LENGTH)
  {
   doing_reop = -1;
   last_reop = timenow;
@@ -119,6 +133,8 @@ cleanup_channels(void)
   if (doing_reop)
    check_channel_status(ch);
  }
+ if (doing_reop)
+  save_channel_opdb();
 }
 
 #ifdef USE_SMODES

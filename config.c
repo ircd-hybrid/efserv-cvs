@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: config.c,v 1.5 2001/05/27 10:16:28 a1kmm Exp $
+ * $Id: config.c,v 1.6 2001/05/30 04:10:15 a1kmm Exp $
  */
 
 #include "efserv.h"
@@ -82,15 +82,14 @@ find_server_vote(const char *name)
 void
 yyerror(char *msg)
 {
- fatal_error("Config file error, line %d: %s\n", lineno, msg);
+ log("[Config] Lex error, line %d: %s\n", lineno, msg);
  return;
 }
 
 void
 check_complete(void)
 {
- if (server_name == NULL || port == 0 || server_host == NULL ||
-     server_pass == NULL || sn == NULL)
+ if (server_name == NULL || sn == NULL)
   fatal_error("General block is missing or incomplete.\n");
 }
 
@@ -106,34 +105,6 @@ read_config_file(const char *file)
  yyin = fle;
  yyparse();
  fclose(fle);
-}
-
-void
-write_dynamic_config(void)
-{
-#if 0
- struct List *node;
- char buffer[10];
- int bp;
- struct Channel *ch;
- FILE *dconf = fopen("dynamic.conf", "w");
- if (dconf == NULL)
-  return;
- FORLIST(node,Channels,struct Channel*,ch)
-  if (HasSMODES(ch))
-  {
-   bp = 0;
-   if (IsBanChan(ch))
-    buffer[bp++] = 'b';
-   if (IsAdminChan(ch))
-    buffer[bp++] = 'a';
-   if (IsOperChan(ch))
-    buffer[bp++] = 'o';
-   buffer[bp++] = 0;
-   fprintf(dconf, "SMODE %s %s\n", ch->name, buffer);
-  }
- fclose(dconf);
-#endif
 }
 
 void
@@ -185,11 +156,31 @@ deref_voteserver(struct VoteServer *vs)
 }
 
 void
+pick_a_hub(void)
+{
+ struct List *node;
+ struct Hub *hub;
+ int hub_count = 0, hub_no;
+ FORLIST(node,Hubs,struct Hub*,hub)
+  hub_count++;
+ if (hub_count == 0)
+  fatal_error("No hubs are defined, can't connect.\n");
+ hub_no = rand() % hub_count;
+ FORLIST(node,Hubs,struct Hub*,hub)
+  if (hub_no-- == 0) 
+   break;
+ server_host = hub->host;
+ port = hub->port;
+ server_pass = hub->pass;
+}
+
+void
 do_rehash(void)
 {
  struct List *node, *nnode;
  struct ServAdmin *sa;
  struct VoteServer *vs;
+ struct Hub *hub;
  FORLISTDEL(node,nnode,serv_admins,struct ServAdmin*,sa)
  {
   free(node);
@@ -202,7 +193,15 @@ do_rehash(void)
   if (vs->refcount == 0)
    deref_voteserver(vs);
  }
+ FORLISTDEL(node,nnode,Hubs,struct Hub*,hub)
+ {
+  free(hub->host);
+  free(hub->pass);
+  free(hub);
+  free(node);
+ }
  VoteServers = NULL;
  serv_admins = NULL;
+ Hubs = NULL;
  read_all_config();
 }

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: modules.c,v 1.2 2001/05/27 10:16:28 a1kmm Exp $
+ * $Id: modules.c,v 1.3 2001/05/30 04:10:16 a1kmm Exp $
  */
 
 #define PATH "/home/andrew/scratch/efserv/"
@@ -24,14 +24,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <time.h>
 
 int reload_module=0, die=0;
+int connected = 0;
 
 struct List *Servers = NULL, *Users = NULL, *Channels = NULL,
-            *Hosts = NULL, *Monitors = NULL, *VoteServers = NULL;
+            *Hosts = NULL, *Monitors = NULL, *VoteServers = NULL,
+            *Hubs = NULL;
+FILE *logfile = NULL;
 struct Server *first_server = NULL;
 void *mmod;
-int server_fd;
+int server_fd, server_count=0, minimum_servers=0;
 #define HASHSIZE 0x1000
 struct HashEntry *hash[0x1000];
 char *server_name=NULL, *server_pass=NULL, *server_host=NULL;
@@ -39,6 +43,7 @@ char *server_name=NULL, *server_pass=NULL, *server_host=NULL;
 char *sn = NULL;
 int port;
 struct List *serv_admins=NULL;
+time_t channel_record_time = 0;
 
 void
 handle_sighup(int n)

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: msg.c,v 1.3 2001/05/29 09:29:45 a1kmm Exp $
+ * $Id: msg.c,v 1.4 2001/05/30 04:10:16 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -108,6 +108,8 @@ pm_jupe(struct User *usr, char *str)
  {
   send_msg(":%s NOTICE %s :Your server has not been given access yet, "
            "or the access has been revoked due to abuse.", sn, usr->nick);
+  log("[Jupe] %s!%s@%s attempted to JUPE from unauthorised server %s.\n",
+      usr->nick, usr->user, usr->host, usr->server->name);
   return;
  }
  /* server [Reason|+|-] */
@@ -119,10 +121,17 @@ pm_jupe(struct User *usr, char *str)
  if (strchr(svr, '.') == NULL)
  {
   send_msg(":%s NOTICE %s :Invalid servername.", sn, usr->nick);
+  log("[Jupe] %s!%s@%s[%s]{%s} attempted to JUPE invalid servername %s.\n",
+      usr->nick, usr->user, usr->host, usr->server->name,
+      usr->sa ? usr->sa->name : "oper", svr);
   return;
  }
  if (!strcasecmp(svr, server_name) || !strcasecmp(svr, first_server->name))
  {
+  log("[Jupe] %s!%s@%s[%s]{%s} attempted to perform jupe on "
+      "illegal(services or active hub) server %s.\n",
+      usr->nick, usr->user, usr->host, usr->server->name,
+      usr->sa ? usr->sa->name : "oper", svr);
   send_msg(
    ":%s NOTICE %s :Cannot jupe services or the server it connects to.",
    sn, usr->nick);
@@ -167,6 +176,9 @@ pm_jupe(struct User *usr, char *str)
   if (usr->sa)
    usr->sa->refcount++;
   add_to_list(&jp->jupevotes, jv);
+  log("[Jupe] %s!%s@%s[%s]{%s} called for votes on juping %s for %s\n",
+      usr->nick, usr->user, usr->host, usr->server->name,
+      usr->sa ? usr->sa->name : "oper", svr, reason);
   send_msg(":%s WALLOPS :%s %s!%s@%s[%s]{%s} is calling for votes to "
            "jupe %s for: %s", sn, IsServAdmin(usr)?"Admin":"Oper",
            usr->nick, usr->user, usr->host, usr->server->name,
@@ -193,6 +205,10 @@ pm_jupe(struct User *usr, char *str)
   if (usr->sa != NULL)
    usr->sa->refcount++;
   add_to_list(&jp->jupevotes, jv);
+  log("[Jupe] %s!%s@%s[%s]{%s} voted %s juping %s.\n",
+      usr->nick, usr->user, usr->host, usr->server->name,
+      usr->sa ? usr->sa->name : "oper", *reason=='+' ? "for":"against",
+      svr);
   send_msg(":%s WALLOPS :%s %s!%s@%s[%s]{%s} is voting %s %s jupe.",
            sn, IsServAdmin(usr)?"Admin":"Oper",
            usr->nick, usr->user, usr->host, usr->server->name,
@@ -203,6 +219,7 @@ pm_jupe(struct User *usr, char *str)
    ssvr->flags &= ~(SERVFLAG_JUPED | SERVFLAG_ACTIVE);
    ssvr->jupe->last_active = timenow;
    send_msg(":%s SQUIT %s :Jupe has been deactivated.", sn, svr);
+   log("[Jupe] Jupe for %s has been deactivated.\n", svr);
    send_msg(":%s WALLOPS :Jupe for %s deactivated.", sn, svr);
   }
   else if (!IsJuped(ssvr) && jp->score >= 15)
@@ -212,6 +229,7 @@ pm_jupe(struct User *usr, char *str)
    send_msg(":%s SQUIT %s :Juped: %s", sn, svr, jp->reason);
    send_msg(":%s SERVER %s 2 :Juped: %s", sn, svr, jp->reason);
    send_msg(":%s WALLOPS :Jupe for %s activated.", sn, svr);
+   log("[Jupe] Jupe for %s has been activated.\n", svr);
    destroy_server_links(ssvr);
   }
   return;
@@ -222,43 +240,73 @@ pm_jupe(struct User *usr, char *str)
  {
   /* They are either abusive or stupid :)... */
   if (usr->sa != NULL && usr->sa == jv->vsa)
+  {
    /* Almost definitely abusive... */
+   log("[Jupe] Admin %s!%s@%s[%s]{%s} voted more than once %s "
+       "juping %s.\n",
+       usr->nick, usr->user, usr->host, usr->server->name,
+       usr->sa->name, *reason=='+' ? "for":"against",
+       svr);
    send_msg(":%s WALLOPS :Admin %s!%s@%s[%s]{%s} has attempted to vote "
             "at least twice %s the juping of %s.",
             sn, usr->nick, usr->user, usr->host, usr->server->name,
             usr->sa->name, jv->score > 0 ? "for":"against", svr);
+  }
   else
+  {
    send_msg(":%s WALLOPS :%s %s!%s@%s[%s]{%s} has attempted to vote "
             "%s the juping of %s for a server-group which has already "
             "voted.",
             sn, IsServAdmin(usr)?"Admin":"Oper", usr->nick, usr->user,
             usr->host, usr->server->name, usr->sa ? usr->sa->name : "oper",
             jv->score > 0 ? "for":"against", svr);
+   log("[Jupe] %s!%s@%s[%s]{%s} attempted to vote on behalf of a server"
+       " which has already voted %s juping %s.\n",
+       usr->nick, usr->user, usr->host, usr->server->name,
+       usr->sa ? usr->sa->name:"oper", *reason=='+' ? "for":"against",
+       svr);
+  }      
   return;
  }
  /* Opers cannot reverse admin votes... */
  if ((jv->score >= 5 || jv->score <= -5) && !IsServAdmin(usr))
  {
+  log("[Jupe] %s!%s@%s[%s] attempted to reverse server vote(%s) regarding"
+      " the juping of %s, which was placed by an admin.\n",
+      usr->nick, usr->user, usr->host, usr->server->name,
+      (jv->score>0) ? "yes":"no", svr);
   send_msg(":%s NOTICE %s :Only admins can reverse admin votes.", sn,
            usr->nick);
   return;
  }
  /* Now reverse the previous vote... */
  jp->score -= jv->score;
- jv->score = IsServAdmin(usr) ? 5 : 3 * (*reason=='-'?-1:1);
+ jv->score = (IsServAdmin(usr) ? 5 : 3) * (*reason=='-'?-1:1);
  jp->score += jv->score;
  /* Notify the admins... */
  if (usr->sa != NULL && jv->vsa == usr->sa)
+ {
   send_msg(":%s WALLOPS :Admin %s!%s@%s[%s]{%s} is changing their vote "
            "regarding the juping of %s to %s.", sn, usr->nick,
            usr->user, usr->host, usr->server->name, usr->sa->name,
            svr, jv->score > 0 ? "yes":"no");
+  log("[Jupe] %s!%s@%s[%s]{%s} has changed their (admin) vote "
+      "regarding the juping of %s to %s.\n", 
+      usr->nick, usr->user, usr->host, usr->server->name,
+      usr->sa ? usr->sa->name:"oper", svr,(jv->score>0) ? "yes":"no");
+ }
  else
+ {
   send_msg(":%s WALLOPS :%s %s!%s@%s[%s]{%s} is changing the server "
            "group vote regarding the juping of %s to %s.", sn,
            IsServAdmin(usr)?"Admin":"Oper", usr->nick, usr->user,
            usr->host, usr->server->name, usr->sa ? usr->sa->name : "oper",
            svr, jv->score > 0 ? "yes" : "no");
+  log("[Jupe] %s!%s@%s[%s]{%s} has changed the server vote "
+      "regarding the juping of %s to %s.\n", 
+      usr->nick, usr->user, usr->host, usr->server->name,
+      usr->sa ? usr->sa->name:"oper", svr,(jv->score>0) ? "yes":"no");
+ }    
  /* I think this is the best way, and if the services is correctly
   * configured it should not be able to be abused... */
  vs->refcount++;
@@ -277,6 +325,7 @@ pm_jupe(struct User *usr, char *str)
   ssvr->jupe->last_active = timenow;
   send_msg(":%s SQUIT %s :Jupe has been deactivated.", sn, svr);
   send_msg(":%s WALLOPS :Jupe for %s deactivated.", sn, svr);
+  log("[Jupe] Jupe for %s has been activated.\n", svr);
  }
  else if (!IsJuped(ssvr) && jp->score >= 15)
  {
@@ -285,6 +334,7 @@ pm_jupe(struct User *usr, char *str)
   send_msg(":%s SQUIT %s :Juped: %s", sn, svr, jp->reason);
   send_msg(":%s SERVER %s 2 :Juped: %s", server_name, svr, jp->reason);
   send_msg(":%s WALLOPS :Jupe for %s activated.", sn, svr);
+  log("[Jupe] Jupe for %s has been deactivated.\n", svr);
   destroy_server_links(ssvr);
  }
 }
@@ -307,6 +357,7 @@ pm_help(struct User *usr, char *str)
  fclose(fhlp);
 }
 
+#ifdef USE_REOP
 void
 pm_reop(struct User *usr, char *str)
 {
@@ -367,6 +418,7 @@ pm_reop(struct User *usr, char *str)
    remove_from_list(&ch->nonops, node);
  add_to_list(&ch->ops, usr2);
 }
+#endif
 
 void
 pm_admin(struct User *usr, char *str)
@@ -406,7 +458,9 @@ struct
 #ifdef USE_SMODE
  {"SMODE", pm_smode, ALEVEL_OPER},
 #endif
+#ifdef USE_REOP
  {"REOP", pm_reop, ALEVEL_OPER},
+#endif
  {"ADMIN", pm_admin, ALEVEL_OPER},
  {"MONITOR", pm_monitor, ALEVEL_OPER},
  {0, 0}

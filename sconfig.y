@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: sconfig.y,v 1.2 2001/05/29 09:29:45 a1kmm Exp $
+ * $Id: sconfig.y,v 1.3 2001/05/30 04:10:17 a1kmm Exp $
  */
 
 %{
@@ -29,6 +29,8 @@
   struct ServAdmin *ad;
   struct AdminHost *ah;
   struct VoteServer *vs;
+  struct Hub *hub;
+  extern int lineno;
   #define DupString(x,y) if(x) free(x); x = strdup(y);
 %}
 
@@ -45,47 +47,83 @@
 %token USER
 %token AUTH
 %token SERVER
+%token HUB
+%token MINSERVS
 %%
 
 conf: conf conf_item | conf_item;
 
 conf_item: general_block |
            admin_block |
+           hub_block |
            server_block;
 
 general_block: GENERAL '{' general_items '}' ';';
 
 general_items: general_items general_item | general_item;
 general_item: general_name |
-              general_port |
-              general_host |
-              general_pass |
-              general_nick;
+              general_nick |
+              general_minservers;
 
 general_name: NAME '=' QSTRING
 {
  DupString(server_name, yylval.string);
 } ';' ;
 
-general_port: PORT '=' NUMBER
-{
- port = yylval.number;
-} ';' ;
-
-general_host: HOST '=' QSTRING
-{
- DupString(server_host, yylval.string);
-} ';' ;
-
-general_pass: PASS '=' QSTRING
-{
- DupString(server_pass, yylval.string);
-} ';' ;
-
 general_nick: NICK '=' QSTRING
 {
  DupString(sn, yylval.string);
 } ';' ;
+
+general_minservers: MINSERVS '=' NUMBER
+{
+ minimum_servers = yylval.number;
+} ';';
+
+hub_block: HUB '{'
+{
+ hub = malloc(sizeof(*hub));
+ hub->host = NULL;
+ hub->pass = NULL;
+ hub->port = 0;
+} hub_items '}'
+{
+ if (hub->host == NULL)
+ {
+  log("[Config] Hub block needs host, line %d.\n", lineno);
+  if (hub->pass)
+   free(hub->pass);
+  free(hub);
+ } else if (hub->pass == NULL)
+ {
+  free(hub->host);
+  free(hub);
+  log("[Config] Hub block needs password, line %d.\n", lineno);
+ } else if (hub->port <= 0 || hub->port > 0xFFFF)
+ {
+  free(hub->host);
+  free(hub->pass);
+  free(hub);
+  log("[Config] Hub block needs valid port number, line %d.\n", lineno);
+ } else
+ {
+  add_to_list(&Hubs, hub);
+ }
+}';';
+hub_items: hub_items hub_item | hub_item;
+hub_item: hub_host | hub_pass | hub_port;
+hub_host: HOST '=' QSTRING
+{
+ DupString(hub->host, yylval.string);
+} ';';
+hub_pass: PASS '=' QSTRING
+{
+ DupString(hub->pass, yylval.string);
+} ';';
+hub_port: PORT '=' NUMBER
+{
+ hub->port = yylval.number;
+} ';';
 
 admin_block: ADMIN '{'
 {
@@ -102,7 +140,11 @@ admin_block: ADMIN '{'
 } admin_items '}'
 {
  if (ad->name == NULL || ad->pass == NULL || ad->hosts == NULL)
+ {
+  log("[Config] Admin block needs name, password and at least one "
+      "auth{} block, line %d.\n", lineno);
   deref_admin(ad);
+ }
  else
  {
   add_to_list(&serv_admins, ad);
@@ -125,7 +167,7 @@ admin_pass: PASS '=' QSTRING
 
 admin_auth: AUTH '{' auth_items '}'
 {
- if (ah->server && ah->server && ah->host)
+ if (ah->server && ah->user && ah->host)
  {
   add_to_list(&ad->hosts, ah);
   ah = malloc(sizeof(*ah));
@@ -134,6 +176,9 @@ admin_auth: AUTH '{' auth_items '}'
   ah->server = NULL;
  } else
  {
+  log(
+   "[Config] Admin auth block needs server, user and host entries, "
+   "line %d.\n", lineno);
   if (ah->user)
    free(ah->user);
   ah->user = NULL;
@@ -172,7 +217,10 @@ server_block: SERVER '{'
 } server_items '}'
 {
  if (vs->names == NULL)
+ {
+  log("[Config] Server block lacks any names, line %d\n", lineno);
   free(vs);
+ }
  else
   add_to_list(&VoteServers, vs);
 } ';';

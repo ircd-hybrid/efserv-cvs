@@ -4,14 +4,16 @@ BIN=efserv
 LEX=lex
 BISON=bison
 MAINSO=efserv.so
-SRCS=md5.c\
-     channels.c\
+SRCS=channels.c\
      commands.c\
      config.c\
      clients.c\
      clones.c\
+     database.c\
      efserv.c\
+     log.c\
      match.c\
+     md5.c\
      msg.c\
      utils.c \
      sconfig.tab.c \
@@ -35,7 +37,7 @@ lex.yy.c : sconfig.l sconfig.tab.h
 %.o : %.c
 	${CC} -c ${CFLAGS} $<
 help.txt : help.txt.in makehelp.pl
-	perl write.pl
+	perl makehelp.pl
 
 depend:
 	${CC} -MM ${SRCS} >.depend
