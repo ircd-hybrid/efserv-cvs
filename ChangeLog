@@ -1,3 +1,7 @@
+*** 20011201_1 by a1kmm
+- Fixed nickflood monitoring in efserv.
+
+
 *** 20011121_2 by wcampbel
 efserv now sends proper numerics to server/client queries.
 
