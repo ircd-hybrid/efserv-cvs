@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.10 2001/11/11 22:13:52 wcampbel Exp $
+ * $Id: clients.c,v 1.11 2001/11/22 04:18:25 wcampbel Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -420,7 +420,7 @@ m_ping(char *sender, int parc, char **parv)
 {
  if (parc < 2)
   parv[1] = sender ? sender : "";
- send_msg(":%s PONG %s %s", server_name, parv[1], server_name);
+ send_msg(":%s PONG %s :%s", server_name, parv[1], server_name);
 }
 
 void
@@ -428,30 +428,47 @@ m_version(char *sender, int parc, char **parv)
 {
  struct User *usr;
  if ((usr = find_user(sender)) == NULL)
+ {
+  log("Cannot find user %s", sender);
   return;
+ }
  if (IsOper(usr))
-  send_msg(":%s NOTICE %s :This is efserv "VERSION, sn, usr->nick);
+  send_msg(":%s 351 %s efserv %s :%s", server_name, usr->nick, server_name,
+           VERSION);
  else
-  send_msg(":%s NOTICE %s :This is the efserv services.", sn, usr->nick);
+  send_msg(":%s 351 %s efserv %s :.", server_name, usr->nick, server_name);
 }
 
 void
 m_admin(char *sender, int parc, char **parv)
 {
- send_msg(":%s NOTICE %s :Please direct efserv queries through your "
-          "local server administrator.", sn, sender);
+ send_msg(":%s 256 %s :Administrative info about %s", server_name, sender,
+          server_name);
+ send_msg(":%s 257 %s :Please direct efserv", server_name, sender);
+ send_msg(":%s 258 %s :queries through your", server_name, sender);
+ send_msg(":%s 259 %s :local server administrator.", server_name, sender);
 }
 
 void
 m_motd(char *sender, int parc, char **parv)
 {
- send_msg(":%s NOTICE %s :This is services. It has no MOTD.", sn, sender);
+ send_msg(":%s 375 %s :- %s Message of the Day -", server_name, sender,
+          server_name);
+ send_msg(":%s 372 %s :- This is services. It has no MOTD.", server_name,
+          sender);
+ send_msg(":%s 376 %s :End of /MOTD command.", server_name, sender);
 }
 
 void
 m_whois(char *sender, int parc, char **parv)
 {
- send_msg(":%s NOTICE %s :Services is IRC Services.", sn, sender);
+ send_msg(":%s 311 %s %s services %s * :* Services *", server_name, sender, sn,
+           server_name);
+ send_msg(":%s 312 %s %s %s : * Services *", server_name, sender, sn,
+           server_name);
+ send_msg(":%s 313 %s %s :is an IRC Operator", server_name, sender, sn);
+ send_msg(":%s 308 %s %s :is IRC Services.", server_name, sender, sn);
+ send_msg(":%s 318 %s %s :End of /WHOIS list.", server_name, sender, sn);
 }
 
 void
