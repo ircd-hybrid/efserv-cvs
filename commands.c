@@ -19,9 +19,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "efserv.h"
 
-struct List *Servers = NULL, *Users = NULL;
+struct List *Servers = NULL, *Users = NULL, *Channels = NULL;
 struct Server *first_server = NULL;
 
 void
@@ -30,6 +31,214 @@ m_ping(char *sender, int parc, char **parv)
  if (parc < 2)
   parv[1] = sender ? sender : "";
  send_msg(":%s PONG %s %s", server_name, parv[1], server_name);
+}
+
+void
+cleanup_channels(void)
+{
+ struct List *node, *nnode;
+ struct Channel *ch;
+ static time_t last_called = 0;
+ if (timenow - last_called < 4)
+  return;
+ FORLISTDEL(node,nnode,Channels,struct Channel*,ch)
+ {
+  if (!HasSMODES(ch) && ch->nonops == NULL && ch->ops == NULL)
+  {
+   remove_from_hash(HASH_CHAN, ch->name);
+   remove_from_list(&Channels, node);
+   free(ch);
+  }
+ }
+}
+
+int
+kick_excluded(struct Channel *ch, struct User *usr)
+{
+ if (IsBanChan(ch))
+ {
+  send_msg(":%s KICK %s %s :This channel has been closed by "
+           NETNAME" administration.", sn, ch->name, usr->nick);
+  return 1;
+ }
+ if (IsOperChan(ch) && !IsOper(usr))
+ {
+  send_msg(":%s MODE %s +b %s!*@*", sn, ch->name, usr->nick);
+  send_msg(":%s KICK %s %s :You must be an IRC Operator to join "
+           "this channel.", sn, ch->name, usr->nick);
+  return 1;
+ }
+ if (IsAdminChan(ch) && !IsAdmin(usr))
+ {
+  send_msg(":%s MODE %s +b %s!*@*", sn, ch->name, usr->nick);
+  send_msg(":%s KICK %s %s :You must be an IRC Admin to join "
+           "this channel.", sn, ch->name, usr->nick);
+  return 1;
+ }
+ return 0;
+}
+
+void
+m_sjoin(char *sender, int parc, char **parv)
+{
+ struct Channel *ch;
+ char *p;
+ /* :sender SJOIN ts channel + :@x ... */
+ if (parc < 5)
+  return;
+ cleanup_channels();
+ if (!(ch = find_channel(parv[2])))
+ {
+  ch = malloc(sizeof(*ch));
+  strncpy(ch->name, parv[2], CHANLEN-1)[CHANLEN-1] = 0;
+  ch->flags = 0;
+  ch->ops = NULL;
+  ch->nonops = NULL;
+  add_to_list(&Channels, ch);
+  add_to_hash(HASH_CHAN, ch->name, ch);
+ }
+ for (p=strtok(parv[parc-1], " "); p; p=strtok(NULL, " "))
+ {
+  int isop = 0;
+  struct User *usr;
+  if (*p == '@')
+  {
+   p++;
+   isop++;
+  }
+  if (*p == '+' || *p == '%')
+   p++;
+  if (!(usr = find_user(p)))
+   continue;
+  if (kick_excluded(ch, usr))
+   continue;
+  add_to_list(isop ? &ch->ops : &ch->nonops, usr);
+ }
+}
+
+void
+m_chmode(char *sender, int parc, char **parv)
+{
+ int arg = 3, dir = 0;
+ char c;
+ struct Channel *ch;
+ struct User *usr, *usr2;
+ struct List *node, *nnode;
+ /* MODE #channel +o nick ... */
+ /* Scan for +o or -o... */
+ if (parc < 4)
+  return;
+ ch = find_channel(parv[1]);
+ while ((c = *parv[2]++))
+  switch (c)
+  {
+   case '-':
+    dir = -1;
+    break;
+   case '+':
+    dir = 0;
+    break;
+   case 'o':
+    if (arg >= parc)
+     continue;
+    if ((usr = find_user(parv[arg])) == NULL)
+     continue;
+    FORLISTDEL(node,nnode,ch->ops,struct User*,usr2)
+     if (usr2 == usr)
+      remove_from_list(&ch->ops, node);
+    FORLISTDEL(node,nnode,ch->nonops,struct User*,usr2)
+     if (usr2 == usr)
+      remove_from_list(&ch->nonops, node);
+    add_to_list(dir ? &ch->nonops : &ch->ops, usr);
+   case 'v':
+   case 'h':
+   case 'b':
+   case 'e':
+   case 'k':
+   case 'l':
+    arg++;
+  }
+}
+
+void
+process_smode(const char *name, const char *mode)
+{
+ struct Channel *ch;
+ struct List *node, *nnode;
+ struct User *usr;
+ int dir = 0;
+ const char *p;
+ char c;
+ if ((ch = find_channel(name)) == NULL)
+ {
+  ch = malloc(sizeof(*ch));
+  ch->ops = NULL;
+  ch->nonops = NULL;
+  ch->flags = 0;
+  strncpy(ch->name, name, CHANLEN-1)[CHANLEN-1] = 0;
+  add_to_hash(HASH_CHAN, ch->name, ch);
+  add_to_list(&Channels, ch);
+ }
+ for (p=mode; (c=*p); p++)
+  switch (c)
+  {
+   case '+':
+    dir = 0;
+    break;
+   case '-':
+    dir = -1;
+    break;
+   case 'b':
+    if (dir)
+     ch->flags &= ~CHFLAG_BANNED;
+    else
+     ch->flags |= CHFLAG_BANNED;
+    break;
+   case 'o':
+    if (dir)
+     ch->flags &= ~CHFLAG_OPERONLY;
+    else
+     ch->flags |= CHFLAG_OPERONLY;
+    break;
+   case 'a':
+    if (dir)
+     ch->flags &= ~CHFLAG_ADMINONLY;
+    else
+     ch->flags |= CHFLAG_ADMINONLY;
+    break;
+  }
+ FORLISTDEL(node,nnode,ch->ops,struct User*,usr)
+  if (kick_excluded(ch, usr))
+  {
+   remove_from_list(&ch->ops, node);
+   continue;
+  }
+ FORLISTDEL(node,nnode,ch->nonops,struct User*,usr)
+  if (kick_excluded(ch, usr))
+  {
+   remove_from_list(&ch->nonops, node);
+   continue;
+  }
+}
+
+void
+pm_smode(struct User *usr, char *str)
+{
+ /* SMODE #channel modes */
+ char *channel, *modes;
+ if ((channel = strtok(str, " ")) == NULL ||
+     ((modes = strtok(NULL, " ")) == NULL)
+     || *channel != '#')
+ {
+  send_msg(":%s NOTICE %s :Usage: SMODE #channel +/-modes", sn,
+           usr->nick);
+  return;
+ }
+ send_msg(":%s WALLOPS :SMODE on %s set %s by %s!%s@%s[%s]",
+          sn, channel, modes, usr->nick, usr->user, usr->host,
+          usr->server->name);
+ process_smode(channel, modes);
+ write_dynamic_config();
 }
 
 void
@@ -62,7 +271,115 @@ pm_jupe(struct User *usr, char *str)
           reason);
  if ((ssvr = find_server(svr)))
   send_msg(":%s SQUIT %s :Juped: %s", sn, svr, reason);
+ else
+ {
+  ssvr = malloc(sizeof(*ssvr));
+  strncpy(ssvr->name, svr, SERVLEN-1)[SERVLEN-1] = 0;
+  ssvr->flags = 0;
+  ssvr->node = add_to_list(&Servers, ssvr);
+  add_to_hash(HASH_SERVER, ssvr->name, ssvr);
+ }
  send_msg(":%s SERVER %s 2 :Juped: %s", server_name, svr, reason);
+}
+
+void
+pm_help(struct User *usr, char *str)
+{
+ FILE *fhlp;
+ char hlpb[2000];
+ if ((fhlp = fopen("help.txt", "r")) == NULL)
+  return;
+ while (fgets(hlpb, 2000, fhlp))
+ {
+  int i;
+  i = strlen(hlpb);
+  if (i>0 && hlpb[i-1]=='\n')
+   hlpb[i-1] = 0;
+  send_msg(":%s NOTICE %s :%s", sn, usr->nick, hlpb);
+ }
+ fclose(fhlp);
+}
+
+void
+pm_reop(struct User *usr, char *str)
+{
+ char *channel, *nick;
+ int onchan = 0;
+ struct Channel *ch;
+ struct List *node, *nnode;
+ struct User *usr2, *usr3;
+ /* #channel nick */
+ if (str==NULL || (channel = strtok(str, " ")) == NULL || *channel != '#'
+     || (nick = strtok(NULL, " ")) == NULL)
+ {
+  send_msg(":%s NOTICE %s :Usage: REOP #channel nick", sn, usr->nick);
+  return;
+ }
+ if (((ch = find_channel(channel)) == NULL) ||
+     (ch->ops == NULL && ch->nonops == NULL))
+ {
+  send_msg(":%s NOTICE %s :That channel doesn't exist.", sn, usr->nick);
+  return;
+ }
+ if ((usr2 = find_user(nick)) == NULL)
+ {
+  send_msg(":%s NOTICE %s :That user doesn't exist.", sn, usr->nick);
+  return;
+ }
+ if (!IsServAdmin(usr) && ch->ops != NULL)
+ {
+  send_msg(":%s NOTICE %s :That channel already has ops.", sn, usr->nick);
+  return;
+ }
+ FORLIST(node,ch->nonops,struct User*,usr3)
+  if (usr3 == usr2)
+   onchan = 1;
+ FORLIST(node,ch->ops,struct User*,usr3)
+  if (usr3 == usr2)
+   onchan = 2;
+ if (onchan == 0)
+ {
+  send_msg(":%s NOTICE %s :That user is not on the channel.", sn,
+           usr->nick);
+  return;
+ }
+ if (onchan == 2)
+ {
+  send_msg(":%s NOTICE %s :That user is already a chanop.", sn,
+           usr->nick);
+  return;
+ }
+ if (!IsServAdmin(usr))
+  send_msg(":%s WALLOPS :Reop command used on %s by %s!%s@%s[%s]",
+           sn, ch->name, usr->nick, usr->user, usr->host,
+           usr->server->name);
+ /* Now send a mode hack for them... */
+ send_msg(":%s MODE %s +o %s", sn, ch->name, nick);
+ FORLISTDEL(node,nnode,ch->nonops,struct User *, usr3)
+  if (usr3 == usr2)
+   remove_from_list(&ch->nonops, node);
+ add_to_list(&ch->ops, usr2);
+}
+
+void
+pm_admin(struct User *usr, char *str)
+{
+ char *user, *pass;
+ /* ADMIN user passwd */
+ if ((user = strtok(str, " ")) == NULL ||
+     (pass = strtok(NULL, " ")) == NULL)
+ {
+  send_msg(":%s NOTICE %s :Usage: ADMIN adminname passwd", sn, usr->nick);
+  return;
+ }
+ if (verify_admin(user, pass))
+ {
+  usr->flags |= UFLAG_SERVADMIN;
+  send_msg(":%s NOTICE %s :You are now a services operator.", sn,
+           usr->nick);
+ }
+ else
+  send_msg(":%s NOTICE %s :Permission denied.", sn, usr->nick);
 }
 
 void
@@ -78,6 +395,10 @@ struct
 } OpCommands[] =
 {
  {"JUPE", pm_jupe},
+ {"HELP", pm_help},
+ {"SMODE", pm_smode},
+ {"REOP", pm_reop},
+ {"ADMIN", pm_admin},
  {0, 0}
 };
 
@@ -151,6 +472,11 @@ m_mode(char *sender, int parc, char **parv)
  struct User *usr;
  if (parc < 3)
   return;
+ if (parv[1][0] == '#')
+ {
+  m_chmode(sender, parc, parv);
+  return;
+ }
  if ((usr = find_user(parv[1])) == NULL)
   return;
  usr->flags = parse_umode(parv[2], usr->flags);
@@ -226,6 +552,18 @@ m_server(char *sender, int parc, char **parv)
 void
 destroy_user(struct User *usr)
 {
+ struct List *node, *node2, *nnode2;
+ struct Channel *ch;
+ struct User *usr2;
+ FORLIST(node,Channels,struct Channel*,ch)
+ {
+  FORLISTDEL(node2,nnode2,ch->nonops,struct User *,usr2)
+   if (usr2 == usr)
+    remove_from_list(&ch->nonops, node2);
+  FORLISTDEL(node2,nnode2,ch->ops,struct User *,usr2)
+   if (usr2 == usr)
+    remove_from_list(&ch->ops, node2);
+ }
  remove_from_hash(HASH_USER, usr->nick);
  remove_from_list(&Users, usr->node);
  free(usr);
@@ -246,6 +584,12 @@ destroy_server(struct Server *svr)
   {
    remove_from_list(&Servers, csvr->node);
    remove_from_hash(HASH_SERVER, csvr->name);
+#if 1
+   /* Yucky bad debug code... */
+   assert(csvr->name[0] != '*');
+   csvr->name[0] = '$';
+   csvr->name[1] = 0;
+#endif
    csvr->node = add_to_list(&DeadServers, csvr);
   }
  }
@@ -310,5 +654,6 @@ struct Command Commands[] =
  {"KILL", m_kill},
  {"MODE", m_mode},
  {"PRIVMSG", m_privmsg},
+ {"SJOIN", m_sjoin},
  {0, 0}
 };

@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <assert.h>
 #include "efserv.h"
 
 
@@ -57,7 +58,7 @@ add_to_hash(int type, char *name, void *data)
 }
 
 void*
-find_in_hash(int type, char *name)
+find_in_hash(int type, const char *name)
 {
  struct HashEntry *he;
  int hv = hash_text(name);
@@ -75,6 +76,7 @@ remove_from_hash(int type, char *name)
  for (he=hash[hv], phe=&hash[hv]; he; phe=&(he->next), he=he->next)
   if (he->type == type && !strcasecmp(name, he->name))
   {
+   *phe = he->next;
    free(he);
    return;
   }
@@ -85,7 +87,9 @@ add_to_list(struct List **list, void *data)
 {
  struct List *nlist = malloc(sizeof(*nlist));
  nlist->next = *list;
+ nlist->prev = NULL;
  *list = nlist;
+ assert(data);
  nlist->data = data;
  return nlist;
 }

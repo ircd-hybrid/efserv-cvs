@@ -28,9 +28,10 @@
 #include "efserv.h"
 
 int server_fd, send_error = 0;
+time_t timenow;
 
 void init_hash(void);
-void read_config_file(void);
+void read_all_config(void);
 
 void
 fatal_error(const char *error, ...)
@@ -157,6 +158,7 @@ do_main_loop(void)
  {
   if ((rv = read(server_fd, p, 512-(pe-read_buffer))) <= 0)
    return;
+  timenow = time(0);
   m = p;
   for (pe = p + rv; p < pe; p++)
    if (*p == '\r' || *p == '\n')
@@ -193,7 +195,7 @@ int
 main(int argc, char **argv)
 {
  init_hash();
- read_config_file();
+ read_all_config();
  printf("server_name: %s\n", server_name);
  hash_commands();
  if (connect_server(server_host, port))

@@ -28,6 +28,7 @@ char *server_name=NULL, *server_pass=NULL, *server_host=NULL;
 /* Interface nick... */
 char *sn = NULL;
 int port;
+struct List *serv_admins=NULL;
 
 void
 value_parse(void)
@@ -81,6 +82,47 @@ cf_server(void)
 }
 
 void
+cf_smode(void)
+{
+ char *chname, *mode;
+ if ((chname = strtok(NULL, " "))==NULL ||
+     (mode = strtok(NULL, " "))==NULL)
+  fatal_error("SMODE tag with too few parameters.");
+ process_smode(chname, mode);
+}
+
+void
+cf_admin(void)
+{
+ char *name, *pass;
+ struct ServAdmin *admin;
+ value_parse();
+ if (!(name = find_value("NAME")) ||
+     !(pass = find_value("PASS")))
+  fatal_error("ADMIN tag needs NAME and PASS values.");
+ admin = malloc(sizeof(*admin));
+ strncpy(admin->name, name, NICKLEN-1)[NICKLEN-1] = 0;
+ strncpy(admin->pass, pass, NICKLEN-1)[NICKLEN-1] = 0;
+ add_to_list(&serv_admins, admin);
+}
+
+int
+verify_admin(const char *name, const char *pass)
+{
+ struct List *node;
+ struct ServAdmin *sa;
+ FORLIST(node,serv_admins,struct ServAdmin*,sa)
+  if (!strcasecmp(sa->name, name))
+  {
+   if (!strcasecmp(sa->pass, pass))
+    return -1;
+   else
+    return 0;
+  }
+ return 0;
+}
+
+void
 check_complete(void)
 {
  if (server_name == NULL)
@@ -88,11 +130,11 @@ check_complete(void)
 }
 
 void
-read_config_file(void)
+read_config_file(const char *file)
 {
  FILE *fle;
  char string[2000];
- fle = fopen("efserv.conf", "r");
+ fle = fopen(file, "r");
  if (!fle)
   fatal_error("Could not open the config file.\n");
  while (fgets(string, 2000, fle))
@@ -102,6 +144,44 @@ read_config_file(void)
    continue;
   if (!strcasecmp(keyword, "SERVER"))
    cf_server();
+  if (!strcasecmp(keyword, "SMODE"))
+   cf_smode();
+  if (!strcasecmp(keyword, "ADMIN"))
+   cf_admin();
  }
+ fclose(fle);
  check_complete();
+}
+
+void
+write_dynamic_config(void)
+{
+ struct List *node;
+ char buffer[10];
+ int bp;
+ struct Channel *ch;
+ FILE *dconf = fopen("dynamic.conf", "w");
+ if (dconf == NULL)
+  return;
+ FORLIST(node,Channels,struct Channel*,ch)
+  if (HasSMODES(ch))
+  {
+   bp = 0;
+   if (IsBanChan(ch))
+    buffer[bp++] = 'b';
+   if (IsAdminChan(ch))
+    buffer[bp++] = 'a';
+   if (IsOperChan(ch))
+    buffer[bp++] = 'o';
+   buffer[bp++] = 0;
+   fprintf(dconf, "SMODE %s %s\n", ch->name, buffer);
+  }
+ fclose(dconf);
+}
+
+void
+read_all_config(void)
+{
+ read_config_file("efserv.conf");
+ read_config_file("dynamic.conf");
 }
