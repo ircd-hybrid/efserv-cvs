@@ -1,7 +1,7 @@
 # efserv Makefile.in
 # DO NOT EDIT
 #
-# $Id: Makefile.in,v 1.7 2001/11/12 00:56:47 wcampbel Exp $
+# $Id: Makefile.in,v 1.8 2001/12/03 02:08:57 wcampbel Exp $
 #
 
 # Don't edit these unless you know what you are doing
@@ -76,6 +76,7 @@ install:
 	${CP} ${BIN} ${IPATH}
 	${CP} ${MAINSO} ${IPATH}
 	${CP} help.txt ${IPATH}
+	${CP} abuse.warn ${IPATH}
 	@echo \-----------------------------------------
 	@echo efserv can now be run as ${prefix}/${BIN}.
 	@echo If you have not yet done so, please copy
