@@ -1,4 +1,5 @@
-/* $Id: dtheader.h,v 1.1 2001/12/10 07:04:45 a1kmm Exp $ */
+/* $Id: dtheader.h,v 1.2 2002/01/03 04:56:01 wcampbel Exp $ */
+/*PGINC("sys/types.h")*/
 /*PGINC("stdlib.h")*/
 /*PGINC("string.h")*/
 /*PINC("define.h")*/
