@@ -16,8 +16,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: utils.h,v 1.2 2001/12/10 07:04:50 a1kmm Exp $
+ * $Id: utils.h,v 1.3 2002/04/15 17:44:34 wcampbel Exp $
  */
+
+#ifndef _UTILS_H
+#define _UTILS_H
 
 enum
 {
@@ -25,7 +28,7 @@ enum
  HASH_SERVER,
  HASH_USER,
  HASH_CHAN,
- HASH_HOST,
+ HASH_HOST
 };
 
 struct HashEntry
@@ -61,3 +64,5 @@ struct List
 #define find_user(name) (struct User*)find_in_hash(HASH_USER,name)
 #define find_channel(name) (struct Channel*)find_in_hash(HASH_CHAN,name)
 #define find_host(name) (struct Host*)find_in_hash(HASH_HOST,name)
+
+#endif

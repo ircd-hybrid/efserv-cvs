@@ -1,3 +1,10 @@
+/* efserv funcs.h - Prototypes
+ * $Id: funcs.h,v 1.5 2002/04/15 17:44:34 wcampbel Exp $
+ */
+
+#ifndef _FUNCS_H
+#define _FUNCS_H
+
 void process_smode(const char *chname, const char *mode);
 void pick_a_hub(void);
 int check_admin(struct User*, const char*, const char*);
@@ -31,4 +38,6 @@ void log(const char *error, ...)
 void fatal_error(const char *, ...);
 int send_msg(char *msg, ...);
 void log(const char *error, ...);
+#endif
+
 #endif

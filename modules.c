@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: modules.c,v 1.8 2001/12/10 07:47:20 a1kmm Exp $
+ * $Id: modules.c,v 1.9 2002/04/15 17:44:31 wcampbel Exp $
  */
 
 #define PATH PREFIX
@@ -27,6 +27,8 @@
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>
+#include "utils.h"
+#include "struct.h"
 
 int reload_module = 0, die = 0;
 int connected = 0, server_count = 0, minimum_servers = 0;

@@ -16,8 +16,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: conf.h,v 1.2 2001/11/11 21:22:24 wcampbel Exp $
+ * $Id: conf.h,v 1.3 2002/04/15 17:44:34 wcampbel Exp $
  */
+
+#ifndef _CONF_H
+#define _CONF_H
 
 extern struct yystype
 {
@@ -31,6 +34,7 @@ enum
  ALEVEL_ADMIN,
  ALEVEL_OPER,
  ALEVEL_SERVADMIN,
- ALEVEL_ANY,
+ ALEVEL_ANY
 };
 
+#endif

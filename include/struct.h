@@ -16,9 +16,13 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: struct.h,v 1.7 2001/12/10 07:04:50 a1kmm Exp $
+ * $Id: struct.h,v 1.8 2002/04/15 17:44:34 wcampbel Exp $
  */
 #include "define.h"
+#include "utils.h"
+
+#ifndef _STRUCT_H
+#define _STRUCT_H
 
 /*  We don't need to translate this, as we reinstall the commands on reload. */
 /*PNOTRANS*/
@@ -146,3 +150,5 @@ struct List* add_to_list_before(struct List **list, struct List *before,
                                 void *data);
 void move_list(struct List **dest, struct List **src);
 void remove_from_list(struct List **list, struct List *node);
+
+#endif

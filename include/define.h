@@ -16,8 +16,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: define.h,v 1.11 2001/12/10 07:04:50 a1kmm Exp $
+ * $Id: define.h,v 1.12 2002/04/15 17:44:34 wcampbel Exp $
  */
+
+#ifndef _DEFINE_H
+#define _DEFINE_H
 
 /* The maximum number of clients per user@host */
 #define MAXCLONES_UHOST 4
@@ -96,3 +99,5 @@
 
 #define JEFLAG_AUTO 1
 #define JEFLAG_MANUAL 2
+
+#endif

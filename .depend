@@ -9,14 +9,16 @@ clients.o: clients.c include/config.h include/define.h \
 clones.o: clones.c include/config.h include/define.h include/struct.h \
  include/utils.h include/funcs.h
 dyntfuncs.o: dyntfuncs.c include/define.h include/config.h \
- include/struct.h include/dyntrans.h include/utils.h
+ include/struct.h include/utils.h include/dyntrans.h
 database.o: database.c include/config.h include/define.h \
  include/struct.h include/utils.h include/funcs.h
 efserv.o: efserv.c include/config.h include/define.h include/struct.h \
  include/utils.h include/funcs.h
-log.o: log.c include/config.h include/define.h include/struct.h
+log.o: log.c include/config.h include/define.h include/struct.h \
+ include/utils.h
 match.o: match.c
-md5.o: md5.c include/config.h include/define.h include/struct.h
+md5.o: md5.c include/config.h include/define.h include/struct.h \
+ include/utils.h
 msg.o: msg.c include/config.h include/define.h include/struct.h \
  include/utils.h include/funcs.h include/conf.h
 utils.o: utils.c include/config.h include/define.h include/utils.h

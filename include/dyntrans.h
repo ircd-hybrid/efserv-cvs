@@ -16,8 +16,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: dyntrans.h,v 1.1 2001/12/10 07:04:50 a1kmm Exp $
+ * $Id: dyntrans.h,v 1.2 2002/04/15 17:44:34 wcampbel Exp $
  */
+
+#ifndef _DYNTRANS_H
+#define _DYNTRANS_H
 
 struct StructType
 {
@@ -70,3 +73,5 @@ struct StructType *FindStructType(const char *name);
 void SaveStructType(const char *name, struct StructType **to);
 void RegisterStructInst(const char *name, const char *type, int isptr,
                         int nrep, void *data);
+
+#endif
