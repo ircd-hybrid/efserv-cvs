@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: utils.c,v 1.4 2001/05/26 01:41:04 a1kmm Exp $
+ * $Id: utils.c,v 1.5 2001/05/29 09:29:45 a1kmm Exp $
  */
 
 #include <ctype.h>
@@ -85,7 +85,7 @@ remove_from_hash(int type, char *name)
   }
 }
 
-void*
+struct List*
 add_to_list(struct List **list, void *data)
 {
  struct List *nlist = malloc(sizeof(*nlist));
@@ -109,4 +109,53 @@ remove_from_list(struct List **list, struct List *node)
  if (node->next)
   node->next->prev = node->prev;
  free(node);
+}
+
+void
+move_list(struct List **list1, struct List **list2)
+{
+ struct List *node;
+ for (node=*list1; node && node->next; node=node->next)
+  ;
+ if (node == NULL)
+  *list1 = *list2;
+ else
+ {
+  node->next = *list2;
+  (*list2)->prev = node;
+ }
+ *list2 = NULL;
+ return;
+}
+
+struct List*
+add_to_list_before(struct List **list, struct List *before, void *d)
+{
+ struct List *nlist;
+ nlist = malloc(sizeof(*nlist));
+ nlist->data = d;
+ if (*list == NULL)
+ {
+  nlist->next = NULL;
+  nlist->prev = NULL;
+  nlist->data = d;
+  *list = nlist;
+  return nlist;
+ }
+ if (before == NULL)
+ {
+  struct List *node;
+  for (node=*list; node->next; node=node->next)
+   ;
+  node->next = nlist;
+  nlist->next = NULL;
+  nlist->prev = node;
+  return nlist;
+ }
+ nlist->prev = before->prev;
+ nlist->next = before;
+ before->prev = nlist;
+ if (nlist->prev == NULL)
+  *list = nlist;
+ return nlist; 
 }

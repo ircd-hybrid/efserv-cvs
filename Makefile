@@ -4,7 +4,8 @@ BIN=efserv
 LEX=lex
 BISON=bison
 MAINSO=efserv.so
-SRCS=channels.c\
+SRCS=md5.c\
+     channels.c\
      commands.c\
      config.c\
      clients.c\

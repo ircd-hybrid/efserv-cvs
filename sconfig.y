@@ -1,3 +1,24 @@
+/*
+ *  sconfig.y: The efserv config file parser.
+ *  This is part of efserv, a services.int implementation.
+ *  efserv is Copyright(C) 2001 by Andrew Miller, and others.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ *    MA  02111-1307  USA.
+ * $Id: sconfig.y,v 1.2 2001/05/29 09:29:45 a1kmm Exp $
+ */
+
 %{
   #include <stdlib.h>
   #include <string.h>
@@ -70,6 +91,9 @@ admin_block: ADMIN '{'
 {
  ad = malloc(sizeof(*ad));
  ah = malloc(sizeof(*ah));
+ ah->user = NULL;
+ ah->host = NULL;
+ ah->server = NULL;
  ad->name = NULL;
  ad->pass = NULL;
  ad->hosts = NULL;
@@ -81,7 +105,7 @@ admin_block: ADMIN '{'
   deref_admin(ad);
  else
  {
-  ad = add_to_list(&serv_admins, ad);
+  add_to_list(&serv_admins, ad);
  }
  free(ah);
 }';';
@@ -105,6 +129,9 @@ admin_auth: AUTH '{' auth_items '}'
  {
   add_to_list(&ad->hosts, ah);
   ah = malloc(sizeof(*ah));
+  ah->host = NULL;
+  ah->user = NULL;
+  ah->server = NULL;
  } else
  {
   if (ah->user)

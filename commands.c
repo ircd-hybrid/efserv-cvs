@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: commands.c,v 1.5 2001/05/27 10:16:28 a1kmm Exp $
+ * $Id: commands.c,v 1.6 2001/05/29 09:29:44 a1kmm Exp $
  */
 
 #include <stdio.h>
@@ -26,6 +26,8 @@
 #include "efserv.h"
 
 void m_ping(char*, int, char**);
+void m_part(char*, int, char**);
+void m_join(char*, int, char**);
 void m_server(char*, int, char**);
 void m_nick(char*, int, char**);
 void m_squit(char*, int, char**);
@@ -52,6 +54,8 @@ struct Command Commands[] =
  {"VERSION", m_version},
  {"ADMIN", m_admin},
  {"MOTD", m_motd},
+ {"PART", m_part},
+ {"JOIN", m_join},
  {0, 0}
 };
 

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: efserv.c,v 1.4 2001/05/26 01:41:03 a1kmm Exp $
+ * $Id: efserv.c,v 1.5 2001/05/29 09:29:44 a1kmm Exp $
  */
 
 #include <stdarg.h>
@@ -136,9 +136,33 @@ parse(char *msg, int len)
    break;
   }
  }
+ if (parv[0] == NULL)
+  return;
  if ((cmd = find_in_hash(HASH_COMMAND, parv[0])) == NULL)
   return;
  cmd->func(sender, parc, parv);
+}
+
+void
+check_events(void)
+{
+ static time_t
+  last_cleanup_jupes=0, last_cleanup_chans=0, last_cleanup_clones=0;
+ if (timenow - last_cleanup_jupes > 10)
+ {
+  last_cleanup_jupes = timenow;
+  cleanup_jupes();
+ }
+ if (timenow - last_cleanup_chans > 5)
+ {
+  last_cleanup_chans = timenow;
+  cleanup_channels();
+ }
+ if (timenow - last_cleanup_clones > 10)
+ {
+  last_cleanup_clones = timenow;
+  cleanup_hosts();
+ }
 }
 
 void
@@ -148,6 +172,7 @@ do_main_loop(void)
  int rv, skip = 0;
  while (reload_module == 0 && die == 0)
  {
+  check_events();
   if ((rv = read(server_fd, p, 2048-(pe-read_buffer))) <= 0)
    return;
   timenow = time(0);

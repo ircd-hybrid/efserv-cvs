@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.2 2001/05/27 10:16:27 a1kmm Exp $
+ * $Id: clients.c,v 1.3 2001/05/29 09:29:43 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -33,12 +33,8 @@ void destroy_server(struct Server *svr);
 void
 cleanup_jupes(void)
 {
- static time_t last_cleanup = 0;
  struct List *node, *nnode;
  struct Server *svr;
- if (timenow-last_cleanup < 10)
-  return;
- last_cleanup = timenow;
  FORLISTDEL(node,nnode,Servers,struct Server*,svr)
   if (!IsJuped(svr) && svr->jupe &&
       (timenow-svr->jupe->last_active) > JUPE_EXPIRE_TIME)
@@ -52,7 +48,8 @@ cleanup_jupes(void)
    destroy_server(svr);
    FORLISTDEL(jnode,jnnode,jp->jupevotes,struct JupeVote*,jv)
    {
-    deref_admin(jv->vsa);
+    if (jv->vsa)
+     deref_admin(jv->vsa);
     deref_voteserver(jv->vs);
     free(node);
     free(jv);

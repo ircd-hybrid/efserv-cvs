@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: efserv.h,v 1.5 2001/05/27 10:16:28 a1kmm Exp $
+ * $Id: efserv.h,v 1.6 2001/05/29 09:29:44 a1kmm Exp $
  */
 
 #include <time.h>
@@ -64,7 +64,16 @@ struct Channel
 {
  char name[CHANLEN];
  int flags;
- struct List *ops, *nonops;
+ time_t ts;
+ struct List *ops, *nonops, *exops;
+ time_t last_notempty;
+};
+
+struct ChanopUser
+{
+ time_t last_opped;
+ unsigned long slices;
+ char uhost_md5[16];
 };
 
 struct AdminHost
@@ -155,7 +164,10 @@ void add_to_hash(int type, char *name, void *data);
 void remove_from_hash(int type, char *name);
 void* find_in_hash(int type, const char *name);
 void fatal_error(const char *error, ...);
-void* add_to_list(struct List **list, void *data);
+struct List* add_to_list(struct List **list, void *data);
+struct List* add_to_list_before(struct List **list, struct List *before,
+                                void *data);
+void move_list(struct List **dest, struct List **src);
 void remove_from_list(struct List **list, struct List *node);
 void process_smode(const char *chname, const char *mode);
 int send_msg(char *msg, ...);
@@ -167,6 +179,10 @@ void deref_voteserver(struct VoteServer *v);
 int match(const char *mask, const char *name);
 struct VoteServer *find_server_vote(const char *name);
 void destroy_server_links(struct Server *svr);
+char *getmd5(struct User*);
+void cleanup_channels(void);
+void cleanup_jupes(void);
+void cleanup_hosts(void);
 
 #define find_server(name) (struct Server*)find_in_hash(HASH_SERVER,name)
 #define find_user(name) (struct User*)find_in_hash(HASH_USER,name)

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: msg.c,v 1.2 2001/05/27 10:16:28 a1kmm Exp $
+ * $Id: msg.c,v 1.3 2001/05/29 09:29:45 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -52,6 +52,7 @@ pm_monitor(struct User *usr, char *str)
  }
 }
 
+#ifdef USE_SMODE
 void
 pm_smode(struct User *usr, char *str)
 {
@@ -90,6 +91,7 @@ pm_smode(struct User *usr, char *str)
  process_smode(channel, modes);
  write_dynamic_config();
 }
+#endif
 
 void
 pm_jupe(struct User *usr, char *str)
@@ -215,8 +217,8 @@ pm_jupe(struct User *usr, char *str)
   return;
  }
  /* Okay, some admin/server is trying to vote twice/change vote... */
- if ((jp->score < 0 && *reason == '-') ||
-     (jp->score > 0 && *reason == '+'))
+ if ((jv->score < 0 && *reason == '-') ||
+     (jv->score > 0 && *reason == '+'))
  {
   /* They are either abusive or stupid :)... */
   if (usr->sa != NULL && usr->sa == jv->vsa)
@@ -281,7 +283,7 @@ pm_jupe(struct User *usr, char *str)
   ssvr->flags |= SERVFLAG_JUPED | SERVFLAG_ACTIVE;
   /* Regardless of previous activity always send SQUIT to be sure... */
   send_msg(":%s SQUIT %s :Juped: %s", sn, svr, jp->reason);
-  send_msg(":%s SERVER %s 2 :Juped: %s", sn, svr, jp->reason);
+  send_msg(":%s SERVER %s 2 :Juped: %s", server_name, svr, jp->reason);
   send_msg(":%s WALLOPS :Jupe for %s activated.", sn, svr);
   destroy_server_links(ssvr);
  }
@@ -401,7 +403,9 @@ struct
 {
  {"JUPE", pm_jupe, ALEVEL_OPER},
  {"HELP", pm_help, ALEVEL_OPER},
+#ifdef USE_SMODE
  {"SMODE", pm_smode, ALEVEL_OPER},
+#endif
  {"REOP", pm_reop, ALEVEL_OPER},
  {"ADMIN", pm_admin, ALEVEL_OPER},
  {"MONITOR", pm_monitor, ALEVEL_OPER},
