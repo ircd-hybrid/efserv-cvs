@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: config.c,v 1.12 2001/12/10 07:47:19 a1kmm Exp $
+ * $Id: config.c,v 1.13 2002/04/16 21:33:28 wcampbel Exp $
  */
 
 #include <stdio.h>
@@ -29,6 +29,11 @@
 #include "struct.h"
 #include "utils.h"
 #include "funcs.h"
+#include "setup.h"
+
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
 
 char *values[200][2];
 int keyc;
@@ -46,7 +51,11 @@ check_admin(struct User *usr, const char *name, const char *pass)
   FORLIST(node, serv_admins, struct ServAdmin *, sa)
     if (!strcasecmp(sa->name, name))
   {
-    if (!strcasecmp(sa->pass, pass))
+#ifdef USE_CRYPT
+    if (!strcmp(sa->pass, crypt(pass, sa->pass)))
+#else
+    if (!strcmp(sa->pass, pass))
+#endif
     {
       struct List *node;
       struct AdminHost *ah;

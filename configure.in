@@ -1,7 +1,8 @@
-dnl $Id: configure.in,v 1.4 2001/12/03 02:25:50 wcampbel Exp $
+dnl $Id: configure.in,v 1.5 2002/04/16 21:33:28 wcampbel Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(efserv.c)
 AC_PREFIX_DEFAULT(/usr/local/efserv)
+AC_CONFIG_HEADER(include/setup.h)
 
 AC_DEFINE_UNQUOTED(EFSERV_PREFIX, %exec_prefix)
 
@@ -22,9 +23,14 @@ AC_PROG_LEX
 dnl Checks for libraries.
 AC_CHECK_FUNC(dlopen,, AC_CHECK_LIB(dl, dlopen))
 
+dnl Check for crypt, do not use descrypt, it's long since obsolete and
+dnl may cause problems with "cruft" copies of the library on long running
+dnl machines
+AC_CHECK_FUNC(crypt,, AC_CHECK_LIB(crypt, crypt))
+
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h malloc.h strings.h unistd.h strings.h string.h)
+AC_CHECK_HEADERS(fcntl.h malloc.h strings.h unistd.h strings.h string.h crypt.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

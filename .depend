@@ -3,7 +3,7 @@ channels.o: channels.c include/config.h include/define.h \
 commands.o: commands.c include/config.h include/define.h \
  include/struct.h include/utils.h
 config.o: config.c include/config.h include/define.h include/struct.h \
- include/utils.h include/funcs.h
+ include/utils.h include/funcs.h include/setup.h
 clients.o: clients.c include/config.h include/define.h \
  include/struct.h include/utils.h include/funcs.h include/serno.h
 clones.o: clones.c include/config.h include/define.h include/struct.h \

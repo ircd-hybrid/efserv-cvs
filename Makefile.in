@@ -1,7 +1,7 @@
 # efserv Makefile.in
 # DO NOT EDIT
 #
-# $Id: Makefile.in,v 1.12 2002/04/15 17:44:31 wcampbel Exp $
+# $Id: Makefile.in,v 1.13 2002/04/16 21:33:27 wcampbel Exp $
 #
 
 # Don't edit these unless you know what you are doing
@@ -42,7 +42,7 @@ SRCS=channels.c\
 # BSD _AND_ GNU Compliant OBJS definition
 OBJS=${SRCS:.c=.o}
 
-all: efserv efserv.so help.txt
+all: efserv efserv.so help.txt mkpasswd
 
 ${BIN}: modules.o Makefile
 	${CC} -rdynamic ${CFLAGS} ${LDFLAGS} modules.o ${LIBS} -o ${BIN}
@@ -83,6 +83,10 @@ dtheader.h: include/config.h include/define.h include/struct.h
 help.txt: help.txt.in makehelp.pl
 	perl makehelp.pl
 
+mkpasswd: mkpasswd.c
+	${CC} -c ${DPATH} ${CFLAGS} $<
+	${CC} -o mkpasswd mkpasswd.o ${LIBS}
+
 lint:
 	lint -aacgprxhH ${DPATH} -Iinclude/ channels.c clients.c clones.c \
 		commands.c config.c database.c efserv.c log.c match.c md5.c \
@@ -92,8 +96,8 @@ depend: sconfig.tab.c dyntrans.tab.c dyntrans.setup.c lex.yy.c
 	${CC} ${CFLAGS} -MM ${SRCS} dyntrans.tab.c >.depend
 
 clean:
-	${RM} -f *.o *.so core efserv.core efserv lex.yy.c
-	${RM} -f sconfig.tab.* help.txt
+	${RM} -f *.o *.so core efserv.core efserv lex.yy.c mkpasswd
+	${RM} -f sconfig.tab.* help.txt include/setup.h
 	${RM} -f dyntrans dyntrans.setup.c dyntrans.ll.c dyntrans.tab.*
 	${RM} -f dtheader.i
 
@@ -106,6 +110,7 @@ install:
 	${INSTALL} ${MAINSO} ${IPATH}
 	${INSTALL} help.txt ${IPATH}
 	${INSTALL} abuse.warn ${IPATH}
+	${INSTALL} mkpasswd ${IPATH}
 	@echo \-----------------------------------------
 	@echo efserv can now be run as ${prefix}/${BIN}.
 	@echo If you have not yet done so, please copy
