@@ -1,0 +1,159 @@
+2001-11-11 19:43  wcampbel
+
+	* channels.c, msg.c, includes/config.h: Another update of config.h,
+	look at the XXX's for more details
+
+2001-11-11 17:13  wcampbel
+
+	* .depend, channels.c, clients.c, clones.c, commands.c, config.c,
+	database.c, efserv.c, log.c, md5.c, msg.c, sconfig.y, utils.c,
+	includes/config.h, includes/define.h: Added a preliminary version
+	of includes/config.h, where all the user/admin level compile time
+	configuration should go.  Not complete yet, as some stuff isn't
+	documented at all or just in define.h
+
+2001-11-11 16:54  db
+
+	* channels.c, clones.c: - preliminary cleanups
+
+2001-11-11 16:26  wcampbel
+
+	* Makefile.in: Fixed some more Makefile issues.  There should be no
+	more GNUism's left
+
+2001-11-11 16:22  wcampbel
+
+	* .depend, msg.c, sconfig.l, sconfig.y, includes/conf.h: Repo moved
+	config.h to conf.h (I will make a config.h with customizable  
+	definitions) Revised includes Updated .depend
+
+2001-11-11 14:36  wcampbel
+
+	* .cvsignore, Makefile.in: Added .cvsignore Sanitized the Makefile
+	somewhat install help.txt on make install
+
+2001-11-08 12:12  wcampbel
+
+	* Makefile.in: Added make distclean
+
+2001-11-04 23:27  wcampbel
+
+	* Makefile.in, channels.c, clients.c, clones.c, commands.c,
+	configure, configure.in, efserv.c, msg.c, sconfig.y: These changes
+	allow efserv to compile on FreeBSD as well as Linux.  Removed
+	GNUism's from Makefile.in Added the appropriate missing #include's
+	Minor correction to send_msg() Check for dlopen in libc first,
+	before checking -ldl (then set the libs   properly in Makefile.in)
+
+2001-07-30 02:51  a1kmm
+
+	* channels.c, clients.c, config.c, configure.in, database.c,
+	efserv.c, modules.c, msg.c, sconfig.l, sconfig.y,
+	includes/define.h, includes/struct.h: - Added jupe exempt
+	functionality.
+
+2001-06-02 01:42  a1kmm
+
+	* clients.c, efserv.c, includes/define.h, includes/struct.h: -
+	Removed some hard-coded and gave them a #define.
+
+2001-06-02 00:21  a1kmm
+
+	* channels.c, clients.c, includes/define.h, includes/funcs.h,
+	includes/struct.h: - Fixed a few bugs.	- Added AutoJupe
+	functionality(#ifdef selected).
+
+2001-06-01 05:31  a1kmm
+
+	* includes/define.h: - Added a "PREFIX" in front of a few more
+	variables.
+
+2001-06-01 04:59  a1kmm
+
+	* Makefile: - Got rid of Makefile.
+
+2001-06-01 04:58  a1kmm
+
+	* Makefile, Makefile.in: - Oops, missed a ${DPATH} in Makefile.in
+
+2001-06-01 04:52  a1kmm
+
+	* .depend, Makefile, Makefile.in, config.c, configure,
+	configure.in, modules.c, includes/define.h: - Added the autoconf
+	stuff to make it a little more user-friendly.
+
+2001-05-31 04:52  a1kmm
+
+	* .depend, Makefile, channels.c, clients.c, clones.c, commands.c,
+	config.c, database.c, efserv.c, efserv.h, log.c, match.c, md5.c,
+	msg.c, sconfig.l, sconfig.y, utils.c, includes/conf.h,
+	includes/define.h, includes/funcs.h, includes/struct.h,
+	includes/utils.h: - Added match.c which I forgot to add before.  -
+	Split up headers into smaller headers.
+
+2001-05-31 03:52  a1kmm
+
+	* channels.c, config.c, efserv.h, example.conf, modules.c, msg.c,
+	sconfig.l, sconfig.y: - Added noreop blocks to prevent ops on
+	dynamic links from being reopped.  - Updated example.conf - we used
+	the yucky old conf before.
+
+2001-05-30 00:10  a1kmm
+
+	* Makefile, channels.c, clients.c, commands.c, config.c,
+	database.c, efserv.c, efserv.h, help.txt.in, log.c, modules.c,
+	msg.c, sconfig.l, sconfig.y, utils.c: - Added logging and we now
+	log lots of stuff.  - Made many fatal errors merely logged.  -
+	Added hub{} blocks and removed the hostname/port from the general{}
+	block.	- We now properly re-hash commands on module reload.  - We
+	now properly reconnect to a random hub on disconnection from
+	another.
+
+2001-05-29 05:29  a1kmm
+
+	* Makefile, channels.c, clients.c, clones.c, commands.c, efserv.c,
+	efserv.h, md5.c, msg.c, sconfig.y, utils.c: - Added handling of
+	PART and JOIN 0.  - Fixed handling of TS.  - Added MD5 code.  -
+	Added support for reop service(not quite right yet).
+
+2001-05-27 06:16  a1kmm
+
+	* .depend, Makefile, channels.c, clients.c, clones.c, commands.c,
+	config.c, efserv.h, modules.c, msg.c, sconfig.l, sconfig.y: - New
+	config file format.  - Votes for jupes.  - Miscellaneous bugfixes.
+
+2001-05-25 21:41  a1kmm
+
+	* Makefile, channels.c, clients.c, clones.c, commands.c, config.c,
+	efserv.c, efserv.h, help.txt.in, makehelp.pl, modules.c, msg.c,
+	utils.c: - We now do clone detection.  - A few bugs fixed.  - Split
+	stuff into many files.	- We are now dynamicly reloadable! Well
+	sort of anyway.
+
+2001-05-25 06:41  a1kmm
+
+	* commands.c, config.c, efserv.c, efserv.h, utils.c: - Maybe about
+	time I do a commit. Ages since the last one...
+
+2001-05-21 05:41  a1kmm
+
+	* .depend, Makefile, commands.c, config.c, efserv.c, efserv.h,
+	example.conf, utils.c: - Much more code added - it actually can
+	jupe now. Still seems to be   a few bugs lurking though.
+
+2001-05-21 02:50  a1kmm
+
+	* efserv.conf, example.conf: - Renamed efserv.conf to example.conf
+	to allow efserv.conf to be changed   on developers cvs without
+	changes being committed.
+
+2001-05-21 02:43  a1kmm
+
+	* Makefile, commands.c, config.c, efserv.c, efserv.conf, efserv.h,
+	utils.c: - Trying to import efserv instead of adding it...
+
+2001-05-21 02:43  a1kmm
+
+	* Makefile, commands.c, config.c, efserv.c, efserv.conf, efserv.h,
+	utils.c: Initial revision
+

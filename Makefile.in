@@ -1,7 +1,7 @@
 # efserv Makefile.in
 # DO NOT EDIT
 #
-# $Id: Makefile.in,v 1.6 2001/11/11 21:26:42 wcampbel Exp $
+# $Id: Makefile.in,v 1.7 2001/11/12 00:56:47 wcampbel Exp $
 #
 
 # Don't edit these unless you know what you are doing
@@ -9,7 +9,7 @@ CC=@CC@
 CP=@CP@
 RM=@RM@
 MKDIR=@MKDIR@
-CFLAGS=-Wall -ggdb -Iincludes/
+CFLAGS=-Wall -ggdb -Iinclude/
 BIN=efserv
 LEX=@LEX@
 BISON=@BISON@
