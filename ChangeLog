@@ -1,3 +1,7 @@
+*** 20011202_2 by wcampbel
+Install abuse.warn properly
+
+
 *** 20011202_1 by a1kmm
 - Added a check so that if the channel is cycled and no-one on the top 5
   list is opped, they are all deopped, +lki modes are removed, and all bans
