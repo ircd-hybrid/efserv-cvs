@@ -1,3 +1,7 @@
+*** 20011111_1 by wcampbel
+Update ChangeLog and test commit
+
+
 2001-11-11 19:56  wcampbel
 
 	* .depend, ChangeLog, Makefile.in, include/serno.h: Repo-moved
