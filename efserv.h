@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: efserv.h,v 1.4 2001/05/26 01:41:03 a1kmm Exp $
+ * $Id: efserv.h,v 1.5 2001/05/27 10:16:28 a1kmm Exp $
  */
 
 #include <time.h>
@@ -28,9 +28,13 @@
 #define CHANLEN 255
 
 #define MAXCLONES_UHOST 4
-#define MAXCLONES_HOST 10
+#define MAXCLONES_HOST 6
+
+#define JUPE_EXPIRE_TIME 45*60
 
 #define NETNAME "test net"
+
+#define VERSION "pre0.1-test"
 
 struct Command
 {
@@ -40,10 +44,11 @@ struct Command
 
 struct User
 {
- char nick[NICKLEN], user[USERLEN], host[HOSTLEN];
- unsigned long flags;
- struct List *node, *monnode;
  struct Server *server;
+ char nick[NICKLEN], user[USERLEN], host[HOSTLEN];
+ unsigned long flags, caps;
+ struct ServAdmin *sa;
+ struct List *node, *monnode;
 };
 
 struct Server
@@ -52,6 +57,7 @@ struct Server
  unsigned long flags;
  struct List *node;
  struct Server *uplink;
+ struct Jupe *jupe;
 };
 
 struct Channel
@@ -61,9 +67,23 @@ struct Channel
  struct List *ops, *nonops;
 };
 
+struct AdminHost
+{
+ char *server, *host, *user;
+};
+
 struct ServAdmin
 {
- char name[NICKLEN], pass[NICKLEN];
+ char *name, *pass;
+ int refcount, caps;
+ struct List *hosts;
+};
+
+struct VoteServer
+{
+ struct List *names;
+ int flags;
+ int refcount;
 };
 
 struct Host
@@ -71,6 +91,23 @@ struct Host
  char host[HOSTLEN+USERLEN+1];
  int count, rate, full;
  time_t last_recalc, last_report;
+};
+
+struct JupeVote
+{
+ struct VoteServer *vs;
+ struct ServAdmin *vsa;
+ int score;
+};
+
+struct Jupe
+{
+ char reason[255];
+ int flags;
+ /* Note: 15 activates an inactive JUPE, 0 deactivates an active JUPE. */
+ int score;
+ struct List *jupevotes;
+ time_t last_active;
 };
 
 enum
@@ -106,7 +143,8 @@ struct List
 
 extern struct Command Commands[];
 extern struct Server *first_server;
-extern struct List *Servers, *Users, *Channels, *Hosts, *Monitors;
+extern struct List *Servers, *Users, *Channels, *Hosts, *Monitors,
+                   *serv_admins, *VoteServers;
 extern struct Server *first_server;
 extern char *server_name, *server_pass, *server_host, *sn;
 extern int port;
@@ -122,8 +160,13 @@ void remove_from_list(struct List **list, struct List *node);
 void process_smode(const char *chname, const char *mode);
 int send_msg(char *msg, ...);
 void write_dynamic_config(void);
-int verify_admin(const char*, const char*);
+int check_admin(struct User*, const char*, const char*);
 void hash_commands(void);
+void deref_admin(struct ServAdmin *a);
+void deref_voteserver(struct VoteServer *v);
+int match(const char *mask, const char *name);
+struct VoteServer *find_server_vote(const char *name);
+void destroy_server_links(struct Server *svr);
 
 #define find_server(name) (struct Server*)find_in_hash(HASH_SERVER,name)
 #define find_user(name) (struct User*)find_in_hash(HASH_USER,name)
@@ -148,6 +191,11 @@ void hash_commands(void);
 #define IsAdminChan(x) (x->flags & CHFLAG_ADMINONLY)
 #define HasSMODES(x) (x->flags & (SMODES))
 
+#define SERVFLAG_JUPED 1
+#define SERVFLAG_ACTIVE 2
+
+#define IsJuped(x) (x->flags & SERVFLAG_JUPED)
+
 /* Loop through a linked list... */
 #define FORLIST(node,list,type,var) \
  for(node=list,var=node?(type)node->data:NULL;\
@@ -160,3 +208,10 @@ void hash_commands(void);
      node;\
      node=nnode,nnode=node?node->next:NULL,var=node?(type)node->data:NULL\
     )
+
+extern struct yystype
+{
+ unsigned long number;
+ char *string;
+} yylval;
+#define YYSTYPE struct yystype

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clones.c,v 1.1 2001/05/26 01:41:03 a1kmm Exp $
+ * $Id: clones.c,v 1.2 2001/05/27 10:16:27 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +30,7 @@ cleanup_hosts(void)
  struct Host *h;
  if (timenow - last_cleanup < 10)
   return;
+ last_cleanup = timenow;
  FORLISTDEL(node,nnode,Hosts,struct Host*,h)
  {
   h->last_recalc -= (timenow-h->last_recalc)/10*10;

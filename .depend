@@ -1,4 +1,11 @@
+channels.o: channels.c efserv.h
 commands.o: commands.c efserv.h
 config.o: config.c efserv.h
+clients.o: clients.c efserv.h
+clones.o: clones.c efserv.h
 efserv.o: efserv.c efserv.h
+match.o: match.c
+msg.o: msg.c efserv.h
 utils.o: utils.c efserv.h
+sconfig.tab.o: sconfig.tab.c efserv.h
+lex.yy.o: lex.yy.c efserv.h sconfig.tab.h

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: msg.c,v 1.1 2001/05/26 01:41:04 a1kmm Exp $
+ * $Id: msg.c,v 1.2 2001/05/27 10:16:28 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -95,10 +95,20 @@ void
 pm_jupe(struct User *usr, char *str)
 {
  char *svr, *reason;
+ struct VoteServer *vs;
+ struct JupeVote *jv;
+ struct Jupe *jp;
  struct Server *ssvr;
+ struct List *node;
  if (first_server == NULL)
   return;
- /* server Reason */
+ if ((vs = find_server_vote(usr->server->name)) == NULL)
+ {
+  send_msg(":%s NOTICE %s :Your server has not been given access yet, "
+           "or the access has been revoked due to abuse.", sn, usr->nick);
+  return;
+ }
+ /* server [Reason|+|-] */
  if (!(svr = strtok(str, " ")) || !(reason = strtok(NULL, "")))
  {
   send_msg(":%s NOTICE %s :Usage: JUPE server reason", sn, usr->nick);
@@ -116,20 +126,165 @@ pm_jupe(struct User *usr, char *str)
    sn, usr->nick);
   return;
  }
- send_msg(":%s WALLOPS :Server %s being juped by %s!%s@%s[%s]: %s",
-          sn, svr, usr->nick, usr->user, usr->host, usr->server->name,
-          reason);
- if ((ssvr = find_server(svr)))
-  send_msg(":%s SQUIT %s :Juped: %s", sn, svr, reason);
- else
+ /* Now we have to look up the jupe... */
+ ssvr = find_server(svr);
+ if ((ssvr == NULL || ssvr->jupe == NULL) &&
+     (*reason == '+' || *reason == '-'))
  {
-  ssvr = malloc(sizeof(*ssvr));
-  strncpy(ssvr->name, svr, SERVLEN-1)[SERVLEN-1] = 0;
-  ssvr->flags = 0;
-  ssvr->node = add_to_list(&Servers, ssvr);
-  add_to_hash(HASH_SERVER, ssvr->name, ssvr);
+  /* Can't vote for/against a non-existant jupe... */
+  send_msg(":%s NOTICE %s :That jupe does not exist.", sn, usr->nick);
+  return;
+ } else if ((ssvr != NULL && ssvr->jupe != NULL) &&
+            !(*reason == '+' || *reason == '-'))
+ {
+  send_msg(":%s NOTICE %s :Jupe already exists; use +/- to vote on it",
+           sn, usr->nick);
+  return;
  }
- send_msg(":%s SERVER %s 2 :Juped: %s", server_name, svr, reason);
+ if (ssvr == NULL || ssvr->jupe == NULL)
+ {
+  if (ssvr == NULL)
+  {
+   ssvr = malloc(sizeof(*ssvr));
+   strncpy(ssvr->name, svr, SERVLEN-1)[SERVLEN-1] = 0;
+   ssvr->flags = 0;
+   ssvr->node = add_to_list(&Servers, ssvr);
+   add_to_hash(HASH_SERVER, ssvr->name, ssvr);
+  }
+  ssvr->jupe = jp = malloc(sizeof(*ssvr->jupe));
+  strncpy(jp->reason, reason, 254)[254] = 0;
+  jp->score = IsServAdmin(usr) ? 5 : 3;
+  jp->last_active = timenow;
+  jp->flags = 0;
+  jp->jupevotes = NULL;
+  jv = malloc(sizeof(*jv));
+  jv->vs = vs;
+  vs->refcount++;
+  jv->vsa = usr->sa;
+  jv->score = IsServAdmin(usr) ? 5 : 3;
+  if (usr->sa)
+   usr->sa->refcount++;
+  add_to_list(&jp->jupevotes, jv);
+  send_msg(":%s WALLOPS :%s %s!%s@%s[%s]{%s} is calling for votes to "
+           "jupe %s for: %s", sn, IsServAdmin(usr)?"Admin":"Oper",
+           usr->nick, usr->user, usr->host, usr->server->name,
+           usr->sa ? usr->sa->name : "oper", svr, reason);
+  /* No action will be taken yet... */
+  return;
+ }
+ /* Now find the current status of their vote... */
+ jp = ssvr->jupe;
+ FORLIST(node,jp->jupevotes,struct JupeVote*,jv)
+ {
+  if ((jv->vs == vs) || (jv->vsa && jv->vsa == usr->sa))
+   break;
+ }
+ if (node == NULL)
+ {
+  /* Easy, it is their first vote... */
+  jv = malloc(sizeof(*jv));
+  jp->score += (IsServAdmin(usr)?5:3) * (*reason=='-' ? -1 : 1);
+  jv->score = (IsServAdmin(usr)?5:3) * (*reason=='-' ? -1 : 1);
+  jv->vs = vs;
+  vs->refcount++;
+  jv->vsa = usr->sa;
+  if (usr->sa != NULL)
+   usr->sa->refcount++;
+  add_to_list(&jp->jupevotes, jv);
+  send_msg(":%s WALLOPS :%s %s!%s@%s[%s]{%s} is voting %s %s jupe.",
+           sn, IsServAdmin(usr)?"Admin":"Oper",
+           usr->nick, usr->user, usr->host, usr->server->name,
+           usr->sa ? usr->sa->name : "oper",
+           *reason=='+'?"for":"against", svr);
+  if (IsJuped(ssvr) && jp->score <= 0)
+  {
+   ssvr->flags &= ~(SERVFLAG_JUPED | SERVFLAG_ACTIVE);
+   ssvr->jupe->last_active = timenow;
+   send_msg(":%s SQUIT %s :Jupe has been deactivated.", sn, svr);
+   send_msg(":%s WALLOPS :Jupe for %s deactivated.", sn, svr);
+  }
+  else if (!IsJuped(ssvr) && jp->score >= 15)
+  {
+   ssvr->flags |= SERVFLAG_JUPED | SERVFLAG_ACTIVE;
+   /* Regardless of previous activity always send SQUIT to be sure... */
+   send_msg(":%s SQUIT %s :Juped: %s", sn, svr, jp->reason);
+   send_msg(":%s SERVER %s 2 :Juped: %s", sn, svr, jp->reason);
+   send_msg(":%s WALLOPS :Jupe for %s activated.", sn, svr);
+   destroy_server_links(ssvr);
+  }
+  return;
+ }
+ /* Okay, some admin/server is trying to vote twice/change vote... */
+ if ((jp->score < 0 && *reason == '-') ||
+     (jp->score > 0 && *reason == '+'))
+ {
+  /* They are either abusive or stupid :)... */
+  if (usr->sa != NULL && usr->sa == jv->vsa)
+   /* Almost definitely abusive... */
+   send_msg(":%s WALLOPS :Admin %s!%s@%s[%s]{%s} has attempted to vote "
+            "at least twice %s the juping of %s.",
+            sn, usr->nick, usr->user, usr->host, usr->server->name,
+            usr->sa->name, jv->score > 0 ? "for":"against", svr);
+  else
+   send_msg(":%s WALLOPS :%s %s!%s@%s[%s]{%s} has attempted to vote "
+            "%s the juping of %s for a server-group which has already "
+            "voted.",
+            sn, IsServAdmin(usr)?"Admin":"Oper", usr->nick, usr->user,
+            usr->host, usr->server->name, usr->sa ? usr->sa->name : "oper",
+            jv->score > 0 ? "for":"against", svr);
+  return;
+ }
+ /* Opers cannot reverse admin votes... */
+ if ((jv->score >= 5 || jv->score <= -5) && !IsServAdmin(usr))
+ {
+  send_msg(":%s NOTICE %s :Only admins can reverse admin votes.", sn,
+           usr->nick);
+  return;
+ }
+ /* Now reverse the previous vote... */
+ jp->score -= jv->score;
+ jv->score = IsServAdmin(usr) ? 5 : 3 * (*reason=='-'?-1:1);
+ jp->score += jv->score;
+ /* Notify the admins... */
+ if (usr->sa != NULL && jv->vsa == usr->sa)
+  send_msg(":%s WALLOPS :Admin %s!%s@%s[%s]{%s} is changing their vote "
+           "regarding the juping of %s to %s.", sn, usr->nick,
+           usr->user, usr->host, usr->server->name, usr->sa->name,
+           svr, jv->score > 0 ? "yes":"no");
+ else
+  send_msg(":%s WALLOPS :%s %s!%s@%s[%s]{%s} is changing the server "
+           "group vote regarding the juping of %s to %s.", sn,
+           IsServAdmin(usr)?"Admin":"Oper", usr->nick, usr->user,
+           usr->host, usr->server->name, usr->sa ? usr->sa->name : "oper",
+           svr, jv->score > 0 ? "yes" : "no");
+ /* I think this is the best way, and if the services is correctly
+  * configured it should not be able to be abused... */
+ vs->refcount++;
+ deref_voteserver(jv->vs);
+ jv->vs = vs;
+ if (usr->sa)
+ {
+  usr->sa->refcount++;
+  deref_admin(jv->vsa);
+ }
+ jv->vsa = usr->sa;
+ /* Now check the score... */
+ if (IsJuped(ssvr) && jp->score <= 0)
+ {
+  ssvr->flags &= ~(SERVFLAG_JUPED | SERVFLAG_ACTIVE);
+  ssvr->jupe->last_active = timenow;
+  send_msg(":%s SQUIT %s :Jupe has been deactivated.", sn, svr);
+  send_msg(":%s WALLOPS :Jupe for %s deactivated.", sn, svr);
+ }
+ else if (!IsJuped(ssvr) && jp->score >= 15)
+ {
+  ssvr->flags |= SERVFLAG_JUPED | SERVFLAG_ACTIVE;
+  /* Regardless of previous activity always send SQUIT to be sure... */
+  send_msg(":%s SQUIT %s :Juped: %s", sn, svr, jp->reason);
+  send_msg(":%s SERVER %s 2 :Juped: %s", sn, svr, jp->reason);
+  send_msg(":%s WALLOPS :Jupe for %s activated.", sn, svr);
+  destroy_server_links(ssvr);
+ }
 }
 
 void
@@ -222,14 +377,13 @@ pm_admin(struct User *usr, char *str)
   send_msg(":%s NOTICE %s :Usage: ADMIN adminname passwd", sn, usr->nick);
   return;
  }
- if (verify_admin(user, pass))
+ if (check_admin(usr, user, pass))
  {
-  usr->flags |= UFLAG_SERVADMIN;
   send_msg(":%s NOTICE %s :You are now a services operator.", sn,
            usr->nick);
  }
  else
-  send_msg(":%s NOTICE %s :Permission denied.", sn, usr->nick);
+  send_msg(":%s NOTICE %s :ADMIN command failed.", sn, usr->nick);
 }
 
 void
@@ -245,11 +399,11 @@ struct
  int alevel;
 } OpCommands[] =
 {
- {"JUPE", pm_jupe, ALEVEL_ADMIN},
+ {"JUPE", pm_jupe, ALEVEL_OPER},
  {"HELP", pm_help, ALEVEL_OPER},
- {"SMODE", pm_smode, ALEVEL_ADMIN},
- {"REOP", pm_reop, ALEVEL_ADMIN},
- {"ADMIN", pm_admin, ALEVEL_ADMIN},
+ {"SMODE", pm_smode, ALEVEL_OPER},
+ {"REOP", pm_reop, ALEVEL_OPER},
+ {"ADMIN", pm_admin, ALEVEL_OPER},
  {"MONITOR", pm_monitor, ALEVEL_OPER},
  {0, 0}
 };

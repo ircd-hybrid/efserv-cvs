@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: channels.c,v 1.1 2001/05/26 01:41:02 a1kmm Exp $
+ * $Id: channels.c,v 1.2 2001/05/27 10:16:27 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -31,6 +31,7 @@ cleanup_channels(void)
  struct Channel *ch;
  if (timenow - last_cleanup < 5)
   return;
+ last_cleanup = timenow;
  FORLISTDEL(node,nnode,Channels,struct Channel*,ch)
   if (!HasSMODES(ch) && ch->ops == NULL && ch->nonops == NULL)
    remove_from_list(&Channels, node);

@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: commands.c,v 1.4 2001/05/26 01:41:03 a1kmm Exp $
+ * $Id: commands.c,v 1.5 2001/05/27 10:16:28 a1kmm Exp $
  */
 
 #include <stdio.h>
@@ -35,6 +35,7 @@ void m_mode(char*, int, char**);
 void m_privmsg(char*, int, char**);
 void m_sjoin(char*, int, char**);
 void m_admin(char*, int, char**);
+void m_motd(char*, int, char**);
 void m_version(char*, int, char**);
 
 struct Command Commands[] =
@@ -48,6 +49,9 @@ struct Command Commands[] =
  {"MODE", m_mode},
  {"PRIVMSG", m_privmsg},
  {"SJOIN", m_sjoin},
+ {"VERSION", m_version},
+ {"ADMIN", m_admin},
+ {"MOTD", m_motd},
  {0, 0}
 };
 

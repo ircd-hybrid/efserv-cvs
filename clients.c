@@ -16,7 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *    MA  02111-1307  USA.
- * $Id: clients.c,v 1.1 2001/05/26 01:41:02 a1kmm Exp $
+ * $Id: clients.c,v 1.2 2001/05/27 10:16:27 a1kmm Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +27,39 @@ void cleanup_hosts(void);
 void m_chmode(char *sender, int parc, char **parv);
 void add_cloner(char*,char*);
 void remove_cloner(char*,char*);
+void destroy_server(struct Server *svr);
+
+
+void
+cleanup_jupes(void)
+{
+ static time_t last_cleanup = 0;
+ struct List *node, *nnode;
+ struct Server *svr;
+ if (timenow-last_cleanup < 10)
+  return;
+ last_cleanup = timenow;
+ FORLISTDEL(node,nnode,Servers,struct Server*,svr)
+  if (!IsJuped(svr) && svr->jupe &&
+      (timenow-svr->jupe->last_active) > JUPE_EXPIRE_TIME)
+  {
+   struct Jupe *jp;
+   struct JupeVote *jv;
+   struct List *jnode, *jnnode;
+   jp = svr->jupe;
+   send_msg(":%s WALLOPS :Call for vote to jupe for server %s expired("
+            "NOT PASSED).", sn, svr->name);
+   destroy_server(svr);
+   FORLISTDEL(jnode,jnnode,jp->jupevotes,struct JupeVote*,jv)
+   {
+    deref_admin(jv->vsa);
+    deref_voteserver(jv->vs);
+    free(node);
+    free(jv);
+   }
+   free(jp);
+  }
+}
 
 unsigned long
 parse_umode(const char *umode, unsigned long m)
@@ -79,6 +112,7 @@ void
 m_nick(char *sender, int parc, char **parv)
 {
  cleanup_hosts();
+ cleanup_jupes();
  if (sender == NULL)
   return;
  if (strchr(sender, '.'))
@@ -96,9 +130,11 @@ m_nick(char *sender, int parc, char **parv)
   strncpy(usr->host, parv[6], USERLEN-1)[USERLEN-1] = 0;
   usr->server = svr;
   usr->flags = parse_umode(parv[4], 0);
+  assert(usr->server);
   add_to_hash(HASH_USER, usr->nick, usr);
   usr->node = add_to_list(&Users, usr);
   usr->monnode = NULL;
+  usr->sa = NULL;
   add_cloner(usr->user, usr->host);
  } else
  {
@@ -129,8 +165,9 @@ m_server(char *sender, int parc, char **parv)
   return;
  svr = malloc(sizeof(*svr));
  strncpy(svr->name, parv[1], SERVLEN-1)[SERVLEN-1] = 0;
- svr->flags = 0;
+ svr->flags = SERVFLAG_ACTIVE;
  svr->node = add_to_list(&Servers, svr);
+ svr->jupe = NULL;
  add_to_hash(HASH_SERVER, svr->name, svr);
  if (first_server == NULL)
  {
@@ -163,6 +200,8 @@ destroy_user(struct User *usr)
  remove_cloner(usr->user, usr->host);
  if (usr->monnode)
   remove_from_list(&Monitors, usr->monnode);
+ if (usr->sa)
+  deref_admin(usr->sa);
  remove_from_hash(HASH_USER, usr->nick);
  remove_from_list(&Users, usr->node);
  free(usr);
@@ -183,12 +222,35 @@ destroy_server(struct Server *svr)
   {
    remove_from_list(&Servers, csvr->node);
    remove_from_hash(HASH_SERVER, csvr->name);
-#if 1
-   /* Yucky bad debug code... */
-   assert(csvr->name[0] != '$');
-   csvr->name[0] = '$';
-   csvr->name[1] = 0;
-#endif
+   csvr->node = add_to_list(&DeadServers, csvr);
+  }
+ }
+ FORLISTDEL(node,nnode,Users,struct User*,usr)
+  FORLIST(node2,DeadServers,struct Server*,csvr)
+   if (usr->server == csvr)
+    destroy_user(usr);
+ FORLISTDEL(node,nnode,DeadServers,struct Server*,csvr)
+ {
+  free(node);
+  free(csvr);
+ }
+}
+
+void
+destroy_server_links(struct Server *svr)
+{
+ struct List *node, *node2, *nnode, *DeadServers=NULL;
+ struct Server *csvr, *usvr;
+ struct User *usr;
+ FORLISTDEL(node,nnode,Servers,struct Server*,csvr)
+ {
+  for (usvr=csvr->uplink; usvr; usvr=usvr->uplink)
+   if (usvr == svr)
+    break;
+  if (usvr)
+  {
+   remove_from_list(&Servers, csvr->node);
+   remove_from_hash(HASH_SERVER, csvr->name);
    csvr->node = add_to_list(&DeadServers, csvr);
   }
  }
@@ -212,6 +274,20 @@ m_squit(char *sender, int parc, char **parv)
   return;
  if ((svr = find_server(parv[1])) == NULL)
   return;
+ if (IsJuped(svr))
+ {
+  /* Just to be sure not to create a race condition, send a SQUIT
+   * first... */
+  send_msg(":%s SQUIT %s :Clearing juped server...", sn, svr->name);
+  send_msg(":%s SERVER %s 1 :Juped: %s", sn, svr->name,
+           svr->jupe->reason);
+  return;
+ }
+ if (svr->jupe)
+ {
+  svr->flags &= SERVFLAG_ACTIVE;
+  return;
+ }
  destroy_server(svr);
 }
 
@@ -249,4 +325,30 @@ m_ping(char *sender, int parc, char **parv)
  if (parc < 2)
   parv[1] = sender ? sender : "";
  send_msg(":%s PONG %s %s", server_name, parv[1], server_name);
+}
+
+void
+m_version(char *sender, int parc, char **parv)
+{
+ struct User *usr;
+ if ((usr = find_user(sender)) == NULL)
+  return;
+ if (IsOper(usr))
+  send_msg(":%s NOTICE %s :This is efserv "VERSION, sn, usr->nick);
+ else
+  send_msg(":%s NOTICE %s :This is the efserv services.", sn, usr->nick);
+}
+
+void
+m_admin(char *sender, int parc, char **parv)
+{
+ send_msg(":%s NOTICE %s :Please direct efserv queries through your "
+          "local server administrator.", sn, sender);
+}
+
+void
+m_motd(char *sender, int parc, char **parv)
+{
+ send_msg(":%s NOTICE %s :Please contact your local server administrator"
+          " if you would like your channel re-opped.", sn, sender);
 }
